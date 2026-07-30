@@ -1,0 +1,6 @@
+interface:
+  display_name: "Visium HD QC Analysis"
+  short_description: "QC and export 10x Visium HD bins"
+  default_prompt: "Use $visiumhd-qc-analysis to QC 10x Visium HD bins and export filtered h5ad files."
+policy:
+  allow_implicit_invocation: true

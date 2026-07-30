@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deconvolution Run Workflow"
+  short_description: "Prepare, launch, and verify deconvolution runs"
+  default_prompt: "Use $workflow-deconvolution-run to prepare, launch, monitor, and verify a spatial deconvolution run."

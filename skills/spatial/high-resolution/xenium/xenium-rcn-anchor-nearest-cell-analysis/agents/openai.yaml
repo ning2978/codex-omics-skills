@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium RCN Anchor Colocalization"
+  short_description: "Find nearest cell types around fixed RCN anchors"
+  default_prompt: "Use $xenium-rcn-anchor-nearest-cell-analysis to identify and validate which eligible cell types are nearest to a fixed phenotype inside an existing Xenium RCN."

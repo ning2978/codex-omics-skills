@@ -1,0 +1,4 @@
+interface:
+  display_name: "ST Data Preparation"
+  short_description: "Prepare Visium/Seurat ST into h5ad"
+  default_prompt: "Use $st-data-preparation to convert raw 10x Visium inputs or Seurat/RCTD spatial objects into downstream-ready .h5ad files with preserved counts, barcode alignment, spatial metadata, sc/ST RDS conversion mode handling, and validation."

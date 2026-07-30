@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visium Spot Niche Annotation"
+  short_description: "Annotate Visium niches anatomically"
+  default_prompt: "Use $visium-spot-niche-annotation to annotate 10x Visium spot-level niches from spatial maps and top markers."

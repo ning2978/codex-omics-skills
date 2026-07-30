@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spatial Transcriptomics Workflow"
+  short_description: "Stage and route spatial transcriptomics work"
+  default_prompt: "Use $workflow-st-analysis to identify the current spatial workflow stage, verify stable contracts, and hand off to the right implementation skill."

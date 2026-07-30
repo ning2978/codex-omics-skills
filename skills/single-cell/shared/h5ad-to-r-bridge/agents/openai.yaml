@@ -1,0 +1,4 @@
+interface:
+  display_name: "H5AD To R Bridge"
+  short_description: "Export AnnData to sparse R, Seurat, and RCTD inputs"
+  default_prompt: "Use $h5ad-to-r-bridge to convert AnnData .h5ad files into sparse Matrix Market exports, Seurat objects, or spacexr/RCTD inputs while preserving raw counts, barcode order, metadata, labels, and spatial coordinates."

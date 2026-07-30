@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA R Monocle2 Analysis"
+  short_description: "Reusable R/Seurat Monocle2 workflow."
+  default_prompt: "Use $sc-r-monocle2-analysis to adapt, run, and validate an R/Seurat Monocle2 trajectory workflow with explicit labels, filters, counts, outputs, and logs."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Publication-grade Omics Analysis"
+  short_description: "Reviewer-defensible omics analysis and reporting gates"
+  default_prompt: "Use $publication-grade-omics-analysis to make this omics workflow manuscript-ready and reviewer-defensible."

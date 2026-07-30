@@ -1,0 +1,4 @@
+interface:
+  display_name: "Squidpy Image Features"
+  short_description: "Squidpy images and spatial stats"
+  default_prompt: "Use $squidpy-spatial-image-features to extract spatial image features and run Squidpy spatial statistics."

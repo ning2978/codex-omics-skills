@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visium HD CellCharter Visualization"
+  short_description: "Plot Visium HD CellCharter niches on HE"
+  default_prompt: "Use $visiumhd-cellcharter-visualization to map Visium HD CellCharter niche labels onto H&E images and validate the plots."

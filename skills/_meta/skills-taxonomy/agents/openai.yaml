@@ -1,0 +1,4 @@
+interface:
+  display_name: "Biomedical Skills Taxonomy"
+  short_description: "Route single-cell and spatial omics skills"
+  default_prompt: "Use $skills-taxonomy to route this biomedical analysis request by modality, resolution, stage, platform, and algorithm."

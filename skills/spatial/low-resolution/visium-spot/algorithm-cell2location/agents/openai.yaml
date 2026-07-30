@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cell2location"
+  short_description: "Run and validate cell2location deconvolution"
+  default_prompt: "Use $algorithm-cell2location to choose cell2location parameters, run the two model stages, and validate abundance outputs."

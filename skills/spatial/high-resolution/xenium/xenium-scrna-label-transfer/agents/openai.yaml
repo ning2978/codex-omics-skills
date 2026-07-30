@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium scRNA Label Transfer"
+  short_description: "Transfer scRNA labels onto Xenium cells"
+  default_prompt: "Use $xenium-scrna-label-transfer to project scRNA-seq cell-type labels onto Xenium cells and validate confidence."

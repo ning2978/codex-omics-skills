@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cell2location Plots"
+  short_description: "Regenerate figures from spatial.h5ad results"
+  default_prompt: "Use $cell2location-result-visualization to regenerate non-interactive summary plots, QC outputs, grouped comparisons, and optional spatial panels from existing cell2location spatial.h5ad results."

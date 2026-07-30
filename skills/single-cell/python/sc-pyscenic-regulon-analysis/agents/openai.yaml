@@ -1,0 +1,4 @@
+interface:
+  display_name: "pySCENIC Regulons"
+  short_description: "Regulon activity with AUCell"
+  default_prompt: "Use $sc-pyscenic-regulon-analysis to interpret pySCENIC regulon activity in AnnData."

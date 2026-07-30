@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm: Tangram"
+  short_description: "Tangram scRNA-to-spatial mapping"
+  default_prompt: "Use $algorithm-tangram to map scRNA labels onto a spatial transcriptomics AnnData object."

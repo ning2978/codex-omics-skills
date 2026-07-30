@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm: CellCharter"
+  short_description: "CellCharter spatial niche runs"
+  default_prompt: "Use $algorithm-cellcharter to run or review a CellCharter spatial niche workflow."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "sc Multiomics TCR/VDJ"
+  short_description: "scRNA plus immune repertoire"
+  default_prompt: "Use $sc-multiomics-tcr-vdj-analysis to integrate scRNA annotations with TCR or VDJ repertoire data."

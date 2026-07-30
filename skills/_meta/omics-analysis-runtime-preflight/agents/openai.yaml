@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omics Runtime Preflight"
+  short_description: "Validate omics data, environments, and GPU training"
+  default_prompt: "Use $omics-analysis-runtime-preflight to audit my single-cell or spatial omics runtime, data contracts, and GPU training readiness."

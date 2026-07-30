@@ -1,0 +1,4 @@
+interface:
+  display_name: "stLearn Spatial Trajectory"
+  short_description: "stLearn trajectory and CCI"
+  default_prompt: "Use $stlearn-spatial-trajectory to run a stLearn Visium trajectory or CCI workflow."

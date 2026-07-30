@@ -1,0 +1,4 @@
+interface:
+  display_name: "Algorithm: COMMOT"
+  short_description: "Spatial ligand-receptor communication"
+  default_prompt: "Use $algorithm-commot to run a COMMOT spatial communication analysis."

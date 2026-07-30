@@ -1,0 +1,4 @@
+interface:
+  display_name: "RCTD Deconvolution"
+  short_description: "Run and validate RCTD spatial deconvolution"
+  default_prompt: "Use $algorithm-rctd to prepare, run, and validate an RCTD spatial deconvolution analysis."

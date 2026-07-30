@@ -1,0 +1,4 @@
+interface:
+  display_name: "scVelo PAGA CellRank"
+  short_description: "RNA velocity and fate analysis"
+  default_prompt: "Use $sc-velocity-paga-cellrank-analysis to run a scVelo, PAGA, or CellRank trajectory workflow."

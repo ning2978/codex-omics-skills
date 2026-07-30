@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "skill_count": 34,
+  "skills": [
+    {
+      "name": "algorithm-cell2location",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/algorithm-cell2location",
+      "description": "Use for cell2location-specific reference signature estimation, spatial abundance modeling, training parameter selection, runtime diagnosis, output validation, or review of cell2location deconvolution across Visium-like projects."
+    },
+    {
+      "name": "algorithm-cellcharter",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/algorithm-cellcharter",
+      "description": "Use when running, reviewing, fixing, or packaging CellCharter spatial niche workflows for Visium-like spatial transcriptomics, including CellCharter API choices, spatial graph construction, neighborhood aggregation, Cluster/ClusterAutoK settings, scVI/RCTD feature inputs, and CellCharter output validation."
+    },
+    {
+      "name": "algorithm-commot",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/algorithm-commot",
+      "description": "Use when running or reviewing COMMOT spatial communication analysis in Python, including ligand-receptor database filtering, `ct.tl.spatial_communication`, sender/receiver pathway summaries, communication direction, cluster communication networks, communication-dependent genes, and output validation."
+    },
+    {
+      "name": "algorithm-rctd",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/algorithm-rctd",
+      "description": "Use this skill for RCTD-specific deconvolution workflow, input requirements, run patterns, and output validation across projects."
+    },
+    {
+      "name": "algorithm-tangram",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/algorithm-tangram",
+      "description": "Use when mapping single-cell RNA-seq references onto spatial transcriptomics with Tangram, including marker-gene selection, `tg.pp_adatas`, cell/cluster mapping modes, annotation projection, gene projection validation, segmentation-aware constrained mapping, and Tangram output checks."
+    },
+    {
+      "name": "cell2location-result-visualization",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/cell2location-result-visualization",
+      "description": "Use this skill when summarizing, plotting, or regenerating figures from existing cell2location `spatial.h5ad` outputs, especially for abundance summaries, QC tables, grouped comparisons, spatial panels, and server-side non-interactive figure generation."
+    },
+    {
+      "name": "codex-imc-neighborhood-analysis",
+      "category": "spatial/high-resolution/codex-imc",
+      "path": "skills/spatial/high-resolution/codex-imc/codex-imc-neighborhood-analysis",
+      "description": "Use when preparing CODEX, IMC, or mIHC cell-level protein tables as AnnData and running cellular neighborhood, RCN/CN, Squidpy, or SOAPy-style spatial niche analysis."
+    },
+    {
+      "name": "environment-installation-policy",
+      "category": "_meta",
+      "path": "skills/_meta/environment-installation-policy",
+      "description": "Use this skill whenever installing, creating, updating, or documenting software environments, packages, dependencies, Conda environments, Python packages, R/Python analysis environments, or reproducibility setup. The user's standing preference is to use conda and pip only, and not use mamba or micromamba."
+    },
+    {
+      "name": "h5ad-to-r-bridge",
+      "category": "single-cell/shared",
+      "path": "skills/single-cell/shared/h5ad-to-r-bridge",
+      "description": "Use when converting AnnData h5ad files into R, Seurat, spacexr, RCTD, or Matrix Market inputs while preserving sparse raw counts, barcode order, metadata, labels, reductions, or spatial coordinates."
+    },
+    {
+      "name": "omics-analysis-runtime-preflight",
+      "category": "_meta",
+      "path": "skills/_meta/omics-analysis-runtime-preflight",
+      "description": "Audit single-cell and spatial-omics analysis readiness across exact Python environments, AnnData data contracts, NVIDIA/CUDA/PyTorch layers, and real synthetic GPU training for scVI or cell2location. Use before heavy scRNA-seq, Xenium, Visium, deconvolution, latent-model, or other accelerator-backed runs; when users ask whether a server GPU actually works; or when diagnosing imports, CUDA visibility, driver failures, hangs, OOM risk, and environment drift."
+    },
+    {
+      "name": "publication-grade-omics-analysis",
+      "category": "cross-cutting",
+      "path": "skills/publication-grade-omics-analysis",
+      "description": "Enforce manuscript-ready, reviewer-defensible planning, execution, annotation, statistics, validation, and reporting for single-cell, spatial, bulk, and multi-omics analyses. Use for analyses intended for an SCI manuscript, publication figures or supplements, formal biological labels or claims, threshold relaxation, cluster or cell exclusion, cross-modality comparison, patient/group inference, or any request that prioritizes publication readiness and reproducibility."
+    },
+    {
+      "name": "sc-multiomics-tcr-vdj-analysis",
+      "category": "single-cell/python",
+      "path": "skills/single-cell/python/sc-multiomics-tcr-vdj-analysis",
+      "description": "Use when integrating single-cell RNA-seq with scTCR, scBCR, bulk TCR, or VDJ repertoire data in Python, including 10x/Singleron/TRUST4 VDJ parsing, clonotype definition, clone expansion, diversity metrics, repertoire overlap, scirpy analysis, TCR distance clustering, and joining clonotypes back to AnnData."
+    },
+    {
+      "name": "sc-pyscenic-regulon-analysis",
+      "category": "single-cell/python",
+      "path": "skills/single-cell/python/sc-pyscenic-regulon-analysis",
+      "description": "Use when running or reviewing pySCENIC/AUCell regulon analysis in Python, including loom input preparation, regulon activity matrices, AUCell thresholding, regulon binarization, RSS ranking, regulon annotation, and joining regulon activity back to Scanpy AnnData."
+    },
+    {
+      "name": "sc-r-monocle2-analysis",
+      "category": "single-cell/r",
+      "path": "skills/single-cell/r/sc-r-monocle2-analysis",
+      "description": "Use when running, adapting, scripting, or validating single-cell RNA-seq Monocle2 pseudotime or trajectory analysis in R from Seurat objects, especially when selecting target cell states, filtering samples/timepoints/conditions, preserving raw counts from Seurat v4/v5 assays, choosing ordering genes, setting root states, exporting plots/tables, or rerunning a subset without overwriting prior results."
+    },
+    {
+      "name": "sc-subcluster-analysis",
+      "category": "single-cell/python",
+      "path": "skills/single-cell/python/sc-subcluster-analysis",
+      "description": "Use this skill when extracting a single-cell subset for reclustering and marker-driven subcluster annotation, especially for immune/myeloid/macrophage/monocyte subsets where raw counts must be preserved, HVG selection needs fallback logic, contamination must be judged from top markers, and labels should be proposed from current marker evidence rather than reused blindly. Also use it for requests involving new UMAP, re-embedding, rerun dimensionality reduction, recluster after filtering/removal/cleaning, filter then rerun, 重新降维, 重新聚类, or 新的 UMAP."
+    },
+    {
+      "name": "sc-velocity-paga-cellrank-analysis",
+      "category": "single-cell/python",
+      "path": "skills/single-cell/python/sc-velocity-paga-cellrank-analysis",
+      "description": "Use when running or reviewing Python single-cell trajectory workflows with scVelo, PAGA, or CellRank, including loom-to-AnnData alignment, spliced/unspliced layer checks, velocity graph construction, latent time, PAGA topology, CellRank fate probabilities, and trajectory output validation."
+    },
+    {
+      "name": "skills-taxonomy",
+      "category": "_meta",
+      "path": "skills/_meta/skills-taxonomy",
+      "description": "Use as the global router for biomedical analysis skills, especially single-cell RNA-seq and spatial omics. Route first by modality, then spatial resolution, workflow stage, platform, and algorithm; avoid project-specific skills unless a repository adapter is explicitly required."
+    },
+    {
+      "name": "squidpy-spatial-image-features",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/squidpy-spatial-image-features",
+      "description": "Use when working with Squidpy spatial image containers, Visium or multiplex image metadata in AnnData, spatial graph construction, image cropping, segmentation layers, image feature extraction, Moran spatial autocorrelation, co-occurrence, neighborhood enrichment, centrality, Ripley statistics, or Squidpy ligand-receptor plots."
+    },
+    {
+      "name": "st-data-preparation",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/st-data-preparation",
+      "description": "Use this skill when preparing raw 10x Visium spatial transcriptomics inputs or Seurat/RCTD spatial objects into standardized `.h5ad` files, including unified R/Seurat-to-Python conversion with sc/ST mode detection, especially when checking barcode matching, spatial metadata structure, raw-count preservation, QC assumptions, Matrix Market exports, or a project's canonical ST preparation workflow."
+    },
+    {
+      "name": "stlearn-spatial-trajectory",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/stlearn-spatial-trajectory",
+      "description": "Use when running or reviewing stLearn workflows for 10x Visium spatial trajectory, morphology-adjusted PCA, SME normalization, louvain clustering, pseudotime root selection, pseudotimespace trajectories, transition marker detection, stLearn ligand-receptor CCI, or stLearn CCI maps."
+    },
+    {
+      "name": "visium-spot-niche-annotation",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/visium-spot-niche-annotation",
+      "description": "Use when annotating or comparing 10x Visium spot-level spatial niches or CellCharter clusters from marker genes, spatial maps, histology anatomy, sample/group distribution, and deconvolution composition, especially when deciding epithelial, stromal, vascular, immune, glandular, artifact, or mixed/interface labels."
+    },
+    {
+      "name": "visium-spot-squidpy-proximity",
+      "category": "spatial/low-resolution/visium-spot",
+      "path": "skills/spatial/low-resolution/visium-spot/visium-spot-squidpy-proximity",
+      "description": "Use when designing, reviewing, running, or packaging 10x Visium spot-level Squidpy spatial proximity analyses from AnnData objects, especially anchor-vs-neighbor tests using existing spatial graphs, deconvolution abundance matrices such as RCTD/cell2location, topology hops, physical distance rings, sample-aware backgrounds, threshold previews, and filtered heatmaps."
+    },
+    {
+      "name": "visiumhd-cellcharter-visualization",
+      "category": "spatial/high-resolution/visium-hd",
+      "path": "skills/spatial/high-resolution/visium-hd/visiumhd-cellcharter-visualization",
+      "description": "Use when plotting, summarizing, or regenerating 10x Visium HD CellCharter niche/cluster outputs, especially mapping CellCharter labels from h5ad back onto H&E images, creating spatial overview plots, bin-to-HE coordinate CSVs, per-sample niche count/fraction tables, and validating nonblank high-DPI PNG outputs."
+    },
+    {
+      "name": "visiumhd-qc-analysis",
+      "category": "spatial/high-resolution/visium-hd",
+      "path": "skills/spatial/high-resolution/visium-hd/visiumhd-qc-analysis",
+      "description": "Use when preparing, QCing, threshold-tuning, or exporting 10x Visium HD binned spatial transcriptomics data, especially Matrix Market plus spatial parquet outputs that need per-bin QC tables, spatial threshold comparison plots, or QC-filtered `.h5ad` files."
+    },
+    {
+      "name": "visiumhd-spatial-domain-neighborhood",
+      "category": "spatial/high-resolution/visium-hd",
+      "path": "skills/spatial/high-resolution/visium-hd/visiumhd-spatial-domain-neighborhood",
+      "description": "Use when analyzing 10x Visium HD or other sub-spot/binned spatial data for spatial domains, BANKSY-style spatial clustering, Squidpy neighborhood enrichment, differential neighborhood enrichment, ligand-receptor communication, or niche profiles from cell-type/bin labels."
+    },
+    {
+      "name": "workflow-deconvolution-run",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/workflow-deconvolution-run",
+      "description": "Use this skill for algorithm-agnostic deconvolution execution flow, including run preparation, launch, monitoring, and completion checks."
+    },
+    {
+      "name": "workflow-sc-analysis",
+      "category": "single-cell/workflow",
+      "path": "skills/single-cell/workflow/workflow-sc-analysis",
+      "description": "Use this skill for single-cell RNA-seq workflow staging and contracts, including preprocessing, reference preparation, conversion, downstream handoff, and routing post-filtering subset reruns with new UMAP/Leiden/markers to sc-subcluster-analysis."
+    },
+    {
+      "name": "workflow-st-analysis",
+      "category": "spatial/shared",
+      "path": "skills/spatial/shared/workflow-st-analysis",
+      "description": "Use when starting, auditing, or staging a spatial transcriptomics project and the current data stage, stable input-output contracts, environment preflight, or handoff to preparation, deconvolution, visualization, or platform-specific analysis must be determined."
+    },
+    {
+      "name": "xenium-rcn-anchor-nearest-cell-analysis",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-rcn-anchor-nearest-cell-analysis",
+      "description": "Analyze which Xenium cell phenotypes are spatially closest to a fixed anchor phenotype inside an existing RCN/CN, using same-ROI nearest-any, nearest-heterotypic, and phenotype-specific distance queries. Use for anchor-cell colocalization summaries, ROI or biological-unit recurrence checks, and auditing nearest-cell distance outputs without recomputing RCNs."
+    },
+    {
+      "name": "xenium-roi-dapi-overlays",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-roi-dapi-overlays",
+      "description": "Use this skill when generating, auditing, rerunning, or validating Xenium ROI split-tile DAPI overlays from morphology_focus crops, especially per-ROI morphology_focus DAPI crop PNGs colored by scVI cell_type_draft centroid scatter points, ROI manifests, sample_roi selections, and tmux/background runs. This skill is for centroid dot overlays only; if the task asks for cell_boundaries.parquet, nucleus_boundaries.parquet, irregular cell polygons, segmentation outlines, or polygon-filled cell overlays, use or combine with xenium-segmentation-new instead."
+    },
+    {
+      "name": "xenium-roi-h5ad-qc-segmentation",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-roi-h5ad-qc-segmentation",
+      "description": "QC-filter per-ROI Xenium h5ad exports (n_genes threshold stats, anucleate removal, global cell_area percentiles, keep boundary/interior stain segmentation only). Use when working with split h5ad per sample/ROI, filtering cells before downstream analysis, or when the user mentions n_genes at least 50, morphology segmentation filter, or excluding nucleus-expansion fallback cells."
+    },
+    {
+      "name": "xenium-scimap-neighborhood-analysis",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-scimap-neighborhood-analysis",
+      "description": "Use for Xenium scimap neighborhood analysis based on local cell-type composition, including whole-population recurrent cellular neighborhoods, target-cell NMF neighborhood states, radius or KNN sensitivity analysis, ROI-level comparisons, and validation of spatial_count outputs."
+    },
+    {
+      "name": "xenium-scrna-label-transfer",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-scrna-label-transfer",
+      "description": "Use when transferring scRNA-seq reference labels onto Xenium cells by shared genes, Harmony/scVI/KNN embeddings, or when auditing projected Xenium cell-type labels before downstream spatial neighborhood analysis."
+    },
+    {
+      "name": "xenium-segmentation-new",
+      "category": "spatial/high-resolution/xenium",
+      "path": "skills/spatial/high-resolution/xenium/xenium-segmentation-new",
+      "description": "Use this skill when working with new-version 10x Xenium (XOA 2.0+) cell segmentation outputs, especially the parquet trio cells.parquet, cell_boundaries.parquet, nucleus_boundaries.parquet, including loading polygons in long-format efficiently, segmentation QC (boundary-stain vs interior-stain vs nucleus-expansion fallback, multi-nucleated cells), and rendering polygon overlays for cropped regions."
+    }
+  ]
+}

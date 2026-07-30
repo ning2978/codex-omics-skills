@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium ROI DAPI Overlays"
+  short_description: "Render per-ROI DAPI crops with scVI cell-type centroid overlays"
+  default_prompt: "Use $xenium-roi-dapi-overlays to generate or audit per-ROI morphology_focus DAPI overlays colored by Xenium cell labels."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium scimap Neighborhoods"
+  short_description: "Run RCN, target NMF, and scale sensitivity"
+  default_prompt: "Use $xenium-scimap-neighborhood-analysis to choose and validate RCN, target-cell NMF, or radius/KNN sensitivity analysis for Xenium."

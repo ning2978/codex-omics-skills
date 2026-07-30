@@ -1,0 +1,4 @@
+interface:
+  display_name: "CODEX IMC Neighborhoods"
+  short_description: "Analyze CODEX/IMC cellular neighborhoods"
+  default_prompt: "Use $codex-imc-neighborhood-analysis to convert CODEX/IMC cell tables to AnnData and run neighborhood analysis."

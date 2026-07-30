@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visium Spot Squidpy Proximity"
+  short_description: "Spot-level spatial proximity tests"
+  default_prompt: "Use $visium-spot-squidpy-proximity to design, run, or review a 10x Visium spot-level Squidpy proximity analysis."

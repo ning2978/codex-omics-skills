@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visium HD Spatial Neighborhood"
+  short_description: "Analyze HD domains, niches, enrichment, and LR"
+  default_prompt: "Use $visiumhd-spatial-domain-neighborhood to analyze Visium HD spatial domains, neighborhood enrichment, or ligand-receptor communication."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium Segmentation"
+  short_description: "Load, QC, and visualize Xenium segmentation"
+  default_prompt: "Use $xenium-segmentation-new to inspect and visualize XOA 2.0+ Xenium segmentation outputs."
