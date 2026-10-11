@@ -1,6 +1,6 @@
 ---
 name: environment-installation-policy
-description: Use this skill whenever installing, creating, updating, or documenting software environments, packages, dependencies, Conda environments, Python packages, R/Python analysis environments, or reproducibility setup. The user's standing preference is to use conda and pip only, and not use mamba or micromamba.
+description: "Enforce the user's environment policy for installs or environment changes: use conda and pip; never use mamba or micromamba unless explicitly requested in the current turn."
 ---
 
 # Skill: environment-installation-policy

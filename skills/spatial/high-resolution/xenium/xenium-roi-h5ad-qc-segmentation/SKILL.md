@@ -1,136 +1,40 @@
 ---
 name: xenium-roi-h5ad-qc-segmentation
-description: >-
-  QC-filter per-ROI Xenium h5ad exports (n_genes threshold stats, anucleate removal,
-  global cell_area percentiles, keep boundary/interior stain segmentation only).
-  Use when working with split h5ad per sample/ROI, filtering cells before downstream
-  analysis, or when the user mentions n_genes at least 50, morphology
-  segmentation filter, or excluding nucleus-expansion fallback cells.
+description: QC-filter existing segmented-cell Xenium per-ROI H5AD counts with a complete cell decision ledger and strict cell/gene merge checks. Does not rerun segmentation.
 ---
 
-# Xenium ROI h5ad QC + Segmentation Filter
+# Xenium ROI count and segmentation QC
 
-## Purpose
+Use existing segmented cells. Boundary stain is an accepted method; morphology supports QC decisions and does not establish biological identity. Choose real-data thresholds from distributions and tissue context; this entrypoint does not choose them scientifically.
 
-Filter **pre-split per-ROI AnnData** (one `{roi_id}.h5ad` per Qupath/Xenium Explorer selection) before downstream scRNA-style or spatial analysis. This is **not** re-segmentation (no Cellpose/Baysor/ProSeg); it filters cells already segmented by 10x multi-stain Xenium.
+## Input and current entrypoint
 
-**Use when:**
+Use a project QC runner implementing the contract below. This package provides
+the QC specification, not a project-specific `xenium_downstream` CLI. Configure
+inputs, counts provenance, thresholds, segmentation methods, metadata and new
+output directories explicitly; verify the runner against these checks.
 
-- Input is a directory of `{ROI}.h5ad` from a sample split (e.g. `<sample>_output_h5ad/`)
-- User wants `n_genes >= N` counts, simple QC, and **morphology-based** segmentation retention (boundary + interior stain only)
+Require one H5AD per ROI, unique stable `obs_names` across all inputs, unique genes, `obs[cell_area,nucleus_area,segmentation_method]` and two-dimensional `obsm["spatial"]` in microns. Default counts are `layers["counts"]`; recompute metrics from that matrix even when metrics already exist. Reject nonfinite, negative or noninteger counts. For raw `X`, explicitly specify `--counts-source X --counts-origin origin.json`; the JSON requires `kind=raw_counts`, `path`, `sha256`, and `matrix` (`X` or `layers/<name>`). Verify the source hash and key-aligned count values. Numerical resemblance alone is insufficient.
 
-**Do NOT use when:**
+Before filtering/merging reject duplicate cell keys and different gene sets; equal gene sets in different order align to the first input. Preserve identifiers; never rename barcodes or intersect genes. Metadata must not overwrite an existing identifier.
 
-- Input is raw `output-XETG*/cells.parquet` only → use `xenium-segmentation-new` for polygon/QC on parquet
-- User wants to **re-run** segmentation from images or `transcripts.parquet`
-- Task is full-slide single `cell_feature_matrix.h5` without ROI splits → use `xenium_qc_two_samples.py` pattern on `split_by_modality/xenium/{sample}/RAW_DATA/`
+Use an existing validated environment. Thresholds are dataset-specific. Optional
+ROI minimum-cell exclusion, maximum nucleus count and per-tier area thresholds
+are explicit decisions. Dropped ROIs remain in the all-cell ledger and receive
+empty per-ROI outputs. Global percentiles use all input ROIs before filtering.
+Existing output artifacts are protected from overwrite.
 
-## Input contract
+## Outputs and acceptance
 
-| Item | Requirement |
-|------|-------------|
-| Directory | `{sample}_output_h5ad/` containing `*.h5ad` (one file per ROI) |
-| `adata.X` | Sparse counts, `n_vars` ~5051 for Xenium 5K panels |
-| `adata.obs` | Must include `cell_area`, `nucleus_area`, `segmentation_method` |
-| `adata.obsm` | `spatial` (2D µm, cell centroids) |
-| ROI ID | File stem, e.g. `5191579.h5ad` → `roi_id=5191579` |
+- Per-ROI H5AD and optional `<sample>_filtered.h5ad`, preserving all genes and retained counts.
+- `all_cell_qc_ledger.csv.gz`: every original `obs_name`, original metadata, recalculated metrics, every pass/fail rule, `retained`, and all `exclusion_reasons`.
+- `n_genes_threshold_summary.csv` with TOTAL, `filter_retention_per_roi.csv`, `segmentation_method_breakdown.csv`, `global_area_thresholds.json`, `run_manifest.json` with sources/hashes/parameters.
 
-Optional sidecar (not required for filtering): `{sample}_coordinates.csv` (ROI polygon vertices), `{sample}_cells_stats/` (per-cell CSV mirrors).
+Reopen outputs, match exact retained keys/count values, check merged row count equals the per-ROI sum and gene order matches the first input. Include excluded ROIs in attrition. Hand off counts-bearing full-gene H5AD to `sc-integration-clustering`; select integration and final resolution explicitly. For boundaries in existing parquet use `xenium-segmentation-new`; rerunning a segmentation model is a separate task.
 
-## Filter pipeline (order matters)
+## Figure presentation
 
-Apply in sequence; log retention after **each** step:
-
-1. **`n_genes_by_counts >= min_genes`** (default 50)
-   - Compute via `sc.pp.calculate_qc_metrics(adata, expr_type="counts", log1p=False)` if column missing.
-2. **Has nucleus**: `nucleus_area > 0` and finite (drops anucleate).
-3. **`cell_area` global percentile band**: keep cells with `cell_area` in **[p_low, p_high]** computed across **all ROIs pooled** (default p1–p99), not per-ROI.
-4. **Segmentation method** (morphology): keep only:
-   - `Segmented by interior stain (18S)`
-   - `Segmented by boundary stain (ATP1A1+CD45+E-Cadherin)`
-   Drop: `Segmented by nucleus expansion of 5.0µm`
-
-Presets for CLI: `interior_stain`, `boundary_stain` (comma-separated).
-
-## Deterministic implementation contract
-
-A repository-local adapter may be named `xenium_roi_h5ad_qc_filter.py`.
-Do not assume it is bundled with this skill; inspect the adapter before use.
-
-Two-pass: (1) scan all ROIs for multi-threshold gene counts + global `cell_area` percentiles; (2) filter, write per-ROI h5ad, optional merged h5ad with `obs['roi_id']`.
-
-```bash
-source ~/miniforge3/etc/profile.d/conda.sh && conda activate scanpy
-
-python /path/to/project/xenium_roi_h5ad_qc_filter.py \
-  --input-dir "/path/to/{sample}_output_h5ad" \
-  --sample <sample_id> \
-  --min-genes 50 \
-  --area-low-pct 1 --area-high-pct 99 \
-  --keep-seg "interior_stain,boundary_stain" \
-  --out-h5ad-dir "results/xenium_roi_h5ad_qc/<sample_id>/filtered_h5ad" \
-  --out-report-dir "results/xenium_roi_h5ad_qc/<sample_id>/reports" \
-  --merge
-```
-
-Use `--no-merge` to skip concatenated h5ad.
-
-## Output contract
-
-| Output | Location (project-relative) |
-|--------|----------------------------|
-| Per-ROI filtered h5ad | `{out-h5ad-dir}/{roi_id}.h5ad` |
-| Merged filtered h5ad | `{out-h5ad-dir}/{sample}_filtered.h5ad` with `obs['roi_id']` |
-| Gene threshold table | `{out-report-dir}/n_genes_threshold_summary.csv` (rows per ROI + `TOTAL`; columns `n_genes_ge_30/40/50/100`) |
-| Step retention | `{out-report-dir}/filter_retention_per_roi.csv` |
-| Segmentation breakdown | `{out-report-dir}/segmentation_method_breakdown.csv` (`before_filter` / `after_filter`) |
-| Area thresholds | `{out-report-dir}/global_area_thresholds.json` |
-| Run log | `{out-report-dir}/qc_filter_summary.log` |
-
-## Validation checklist
-
-After run, confirm:
-
-- [ ] Per-ROI h5ad count matches input ROI count
-- [ ] Merged `n_obs` equals sum of per-ROI `n_obs` (if `--merge`)
-- [ ] All retained cells: `n_genes_by_counts >= min_genes`, `nucleus_area > 0`, area within global band
-- [ ] **Zero** cells with `segmentation_method == nucleus expansion` in filtered objects
-- [ ] Spot-read 1–2 ROI files + merged: `n_vars` unchanged, `obsm['spatial']` present
-
-## Interpreting Retention
-
-Low-retention ROIs often reflect few cells passing the selected `min_genes` threshold in that ROI, not necessarily a script bug. Inspect `filter_retention_per_roi.csv` and the `n_genes_threshold_summary.csv` columns before changing segmentation filters.
-
-Write filtered outputs under the active analysis repository or results root, not back into raw download/storage directories.
-
-## Relation to other skills
-
-| Skill | Role |
-|-------|------|
-| `xenium-segmentation-new` | Parquet boundaries, polygon QC, vertex plots on **full slide** `cells.parquet` |
-| **this skill** | **Per-ROI h5ad** gene QC + stain-based segmentation filter |
-| project full-slide QC scripts | Full-slide `cell_feature_matrix.h5` + optional cells.parquet join |
-
-Downstream after filtering: normalization/UMAP/Leiden on `{sample}_filtered.h5ad` with `roi_id` as batch covariate, or per-ROI analyses.
-
-## Agent workflow
-
-```
-Task Progress:
-- [ ] Confirm input dir has {sample}_output_h5ad/*.h5ad
-- [ ] Run xenium_roi_h5ad_qc_filter.py (scanpy env)
-- [ ] Read n_genes_threshold_summary.csv TOTAL row for user-facing stats
-- [ ] Read filter_retention_per_roi.csv if user asks about specific ROI losses
-- [ ] Verify nucleus_expansion count = 0 in filtered data
-- [ ] Point user to merged h5ad for downstream
-```
-
-## Troubleshooting
-
-| Issue | Action |
-|-------|--------|
-| `_CSRDataset` comparison error on backed X | Load full `read_h5ad` for pass1 (script already does) |
-| Very low ROI retention | Check `n_genes_ge_50` column for that ROI in threshold summary |
-| User wants stricter genes | Increase `--min-genes` (e.g. 100) |
-| User wants boundary-only | `--keep-seg boundary_stain` |
-| User wants to include nucleus expansion | `--keep-seg interior_stain,boundary_stain,nucleus_expansion` (not default) |
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

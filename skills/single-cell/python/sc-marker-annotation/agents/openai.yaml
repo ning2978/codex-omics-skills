@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA Markers and Annotation"
+  short_description: "Full-gene markers and versioned annotation evidence"
+  default_prompt: "Use $sc-marker-annotation to perform the corresponding single-cell stage with declared matrices and evidence."

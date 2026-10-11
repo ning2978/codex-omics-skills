@@ -1,4 +1,4 @@
 interface:
-  display_name: "Xenium ROI H5AD QC"
-  short_description: "QC Xenium ROI cells and segmentation metadata"
-  default_prompt: "Use $xenium-roi-h5ad-qc-segmentation to QC-filter Xenium ROI H5AD files while preserving segmentation evidence."
+  display_name: "Xenium Roi H5Ad Qc Segmentation"
+  short_description: "Xenium Roi H5Ad Qc Segmentation"
+  default_prompt: "Use $xenium-roi-h5ad-qc-segmentation to guide this task with its input and validation contracts."

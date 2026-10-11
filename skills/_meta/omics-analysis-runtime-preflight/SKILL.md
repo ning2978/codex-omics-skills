@@ -1,6 +1,6 @@
 ---
 name: omics-analysis-runtime-preflight
-description: Audit single-cell and spatial-omics analysis readiness across exact Python environments, AnnData data contracts, NVIDIA/CUDA/PyTorch layers, and real synthetic GPU training for scVI or cell2location. Use before heavy scRNA-seq, Xenium, Visium, deconvolution, latent-model, or other accelerator-backed runs; when users ask whether a server GPU actually works; or when diagnosing imports, CUDA visibility, driver failures, hangs, OOM risk, and environment drift.
+description: Audit omics runtime readiness across exact Python environments, AnnData data contracts, NVIDIA/CUDA/PyTorch, and real scVI or cell2location GPU smoke tests. Use before heavy or failing single-cell and spatial runs.
 ---
 
 # Omics Analysis Runtime Preflight
@@ -44,7 +44,7 @@ Treat timeouts as failures with evidence. Do not retry an indefinitely hanging C
 
 ### 3. Validate representative AnnData contracts
 
-Use backed reads and a bounded matrix sample:
+Use direct HDF5 reads and bounded matrix chunks (the checker never instantiates AnnData or materializes layers):
 
 ```bash
 <analysis-python> <skill-dir>/scripts/h5ad_contract.py \
@@ -56,6 +56,8 @@ Use backed reads and a bounded matrix sample:
 ```
 
 Use `--kind scrna`, `xenium`, `visium`, or `generic`. For training inputs, require sampled values to be finite, nonnegative, and integer-like. For Xenium/Visium, require a finite two-column-or-wider `obsm["spatial"]`. Report that the integer check is sampled, not a proof over the full matrix.
+
+`--chunk-values` bounds each dense tile or sparse data/index chunk; metadata/key uniqueness still needs O(number of keys) memory. `--full-count-scan` streams all stored count values when exhaustive numerical validation is needed. Numerical validation is separate from raw-count provenance. Do not call `anndata.read_h5ad(backed="r")` memory-bounded: current AnnData versions may eagerly load layers. An `auto` count source is reported as a warning, not proof of a declared input.
 
 ### 4. Execute named-model smoke tests
 

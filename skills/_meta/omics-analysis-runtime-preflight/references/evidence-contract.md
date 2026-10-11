@@ -27,7 +27,7 @@ Record a separately tested row for scVI and cell2location. Different environment
 
 For all AnnData inputs require:
 
-- successful backed reopen;
+- successful direct HDF5 reopen without loading all layers;
 - nonzero shape and unique observation/variable names;
 - an explicit count source;
 - a bounded sample of finite, nonnegative, integer-like values for count-model inputs;
@@ -39,7 +39,7 @@ For Xenium or Visium additionally require:
 - finite sampled coordinates;
 - a stable sample/library boundary that downstream spatial graphs can respect.
 
-The bundled checker samples matrix values for safety. Report this as a sampled integrity gate. Use a dataset-specific full validator when exhaustive count verification is required.
+The checker streams dense tiles or sparse data/index chunks directly with h5py, never through AnnData backed layer loading. Matrix chunk memory is bounded by `--chunk-values`; key-uniqueness metadata remains O(keys). Default sampling is a partial integrity gate; `--full-count-scan` streams all stored count values. Neither proves provenance or biological validity. Auto source selection warns and training still requires a declared source.
 
 ## Smoke-test boundary
 

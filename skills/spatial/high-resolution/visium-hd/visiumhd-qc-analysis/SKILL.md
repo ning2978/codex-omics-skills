@@ -29,25 +29,12 @@ This skill complements `spatial/low-resolution/visium-spot/st-data-preparation`:
 
 ## Recommended Defaults
 
-For 8um Visium HD bins, start with threshold exploration instead of guessing.
-Use the target repository's adapter when one exists; the command below shows
-the required interface rather than a bundled script:
-
-```bash
-python /path/to/project/compare_visiumhd_qc_thresholds.py \
-  --thresholds 20 50 80 100 \
-  --max-pct-mt 20 \
-  --max-counts 50000
-```
-
-Formal export after threshold selection:
-
-```bash
-python /path/to/project/export_visiumhd_qced_h5ad.py \
-  --min-genes 100 \
-  --max-pct-mt 20 \
-  --max-counts 50000
-```
+For 8 µm bins, compare candidate minimum-gene thresholds (for example 20, 50,
+80 and 100) against spatial coverage, count distributions and mitochondrial
+fraction. These are an illustrative grid, not validated universal cutoffs.
+Use a project QC runner that implements the input/output contract below; this
+skill does not bundle a dataset-specific comparison or export script. Record
+the selected thresholds and their evidence before export.
 
 Use the current project's validated Python environment. Use conda/pip environments only.
 
@@ -87,3 +74,10 @@ After h5ad export:
 - Do not reuse a published or old project threshold without checking spatial pass-bin plots.
 - Do not treat Visium spot QC thresholds as Visium HD defaults.
 - Keep binned output resolution explicit, for example `square_008um`.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

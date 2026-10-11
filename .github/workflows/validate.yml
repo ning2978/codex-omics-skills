@@ -19,5 +19,5 @@ jobs:
         run: python scripts/build_catalog.py --check
       - name: Validate skills and portability
         run: python scripts/validate_repo.py
-      - name: Exercise installer selection
-        run: python scripts/install_skills.py --dry-run --name sc-subcluster-analysis
+      - name: Exercise isolated installs and dependency closure
+        run: python -B -m unittest discover -s scripts -p 'test_*.py' -v

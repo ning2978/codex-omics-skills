@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA Integration and Clustering"
+  short_description: "Matrix-aware integration and cluster assessment"
+  default_prompt: "Use $sc-integration-clustering to perform the corresponding single-cell stage with declared matrices and evidence."

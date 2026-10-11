@@ -120,3 +120,10 @@ Subsample large cell-level data for expensive permutation or co-occurrence runs,
 - For anchor-vs-neighbor deconvolution questions, use `visium-spot-squidpy-proximity`.
 - For Xenium-specific segmentation parquet or ROI QC, use the Xenium skills.
 - Do not run Napari on a headless server unless the user specifically asks for GUI setup.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

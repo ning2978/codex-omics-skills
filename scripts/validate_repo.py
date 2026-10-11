@@ -14,9 +14,6 @@ import build_catalog
 
 
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
-RESOURCE_RE = re.compile(
-    r"\b((?:references|scripts)/[A-Za-z0-9_./-]+\.(?:md|py|sh|R|json|ya?ml))"
-)
 SECURITY_PATTERNS = {
     "Linux home absolute path": re.compile(r"/home/[A-Za-z0-9._-]+/"),
     "macOS home absolute path": re.compile(r"/Users/[A-Za-z0-9._-]+/"),
@@ -113,8 +110,10 @@ def validate(repo_root: Path) -> list[str]:
                 )
 
         skill_text = skill_file.read_text(encoding="utf-8")
-        for resource in sorted(set(RESOURCE_RE.findall(skill_text))):
-            target = skill_file.parent / resource.rstrip(".,:;)")
+        for resource in re.findall(r"`((?:references|scripts)/[^` ]+\.(?:md|py|sh|R|json|ya?ml))`", skill_text):
+            target = skill_file.parent / resource
+            # Bare resource code spans must be local. Cross-skill resources use
+            # full relative Markdown links, checked separately below.
             if not target.exists():
                 errors.append(f"{skill_file}: missing resource {resource}")
 
@@ -194,8 +193,12 @@ def validate(repo_root: Path) -> list[str]:
             detail = (result.stdout + result.stderr).strip()
             errors.append(f"taxonomy audit failed:\n{detail}")
 
-    if len(skill_files) != 34:
-        errors.append(f"expected 34 skills, discovered {len(skill_files)}")
+    if len(skill_files) != 43:
+        errors.append(f"expected 43 skills, discovered {len(skill_files)}")
+    for category, expected in {"single-cell": 12, "spatial": 25, "_meta": 3}.items():
+        count = len(list((repo_root / "skills" / category).rglob("SKILL.md")))
+        if count != expected:
+            errors.append(f"{category}: expected {expected} skills, discovered {count}")
     return errors
 
 
@@ -207,7 +210,7 @@ def main() -> int:
     if errors:
         print(f"FAILED: {len(errors)} error(s)")
         return 1
-    print("OK: 34 skills passed structure, metadata, link, syntax, and safety checks")
+    print("OK: 43 skills passed structure, metadata, link, syntax, and safety checks")
     return 0
 
 

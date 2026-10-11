@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA Sample Comparisons"
+  short_description: "Biological-unit DEG, proportions and enrichment"
+  default_prompt: "Use $sc-sample-level-comparison to perform the corresponding single-cell stage with declared matrices and evidence."

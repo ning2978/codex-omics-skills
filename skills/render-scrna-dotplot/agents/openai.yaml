@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA-seq Native Seurat DotPlot"
+  short_description: "Render validated native Seurat scRNA DotPlots"
+  default_prompt: "Use $render-scrna-dotplot to render a validated PNG-only scRNA-seq marker DotPlot package."

@@ -1,0 +1,22 @@
+# Spatial stage contracts
+
+Each stage declares the unique cell/transcript/gene keys it actually uses, ROI boundary, coordinate unit/frame/orientation, genuine biological unit and ROI nesting. Labels have explicit field, source and evidence grade; identities, transfer predictions, EPI states and RCN/NMF assignments remain separate. A project registry is an adapter requirement, not a generic data prerequisite.
+
+| Stage | Required inputs | Output/handoff |
+|---|---|---|
+| Existing segmentation inspection | Single-sample cell keys and complete cell/nucleus rings; physical units/orientation | Ring/QC audit and PNGs, no new cells |
+| Requested resegmentation | Registered stain images and/or molecule table, method inputs, representative ROI, original versions | New cell set and assignment version, old/new overlap links, rebuilt counts/QC/annotations/spatial outputs |
+| Label transfer/review | Explicit reference/target measured matrices, stable genes, label source/evidence, biological units | Mapping audit, predictions/votes/calibration status, independently supplied/measured review; geometry only for spatial audit |
+| RCN/NMF composition | Unique cells, geometry, ROI, units, trusted phenotypes, independent center/contributor masks | Counts/proportions, supported assignments, qualified namespace, profiles/loadings, support and sensitivity |
+| Spatial conditional null | Fixed anchors/candidates, geometry, labels, ROI/block/strata, predeclared hypothesis/family | Null distributions/effects/p/q, margins, missing/untestable status, unit support |
+| Communication | Explicit measured expression, stable genes/species/DB/panel audit, geometry/ROI/distance units | Per-ROI model inputs then separately validated communication potential |
+
+Geometry and composition do not require H5AD/counts. Expression stages declare X or layers/name and counts/normalized/log1p provenance; scaled or integrated matrices are not measured-marker/LR evidence. Stable source IDs survive symbol mapping; ambiguous and many-to-one collisions require an explicit resolution, not suffixes/case folding. Biological units are declared; ROI nesting is checked and cells never substitute for replication.
+
+Every run records input/tool SHA256, exact environment, all parameters, upstream stage/source IDs and evidence status, output inventory and validation scope. The portable tools share [run_contract.py](../../../../_shared/spatial/run_contract.py); include `<skills-root>/_shared/spatial/*.py` when distributing their relative tree. No project package or registry is needed. Resume accepts only complete matching input/tool/environment/parameter signatures and every reopened, hash-matching output. Partial or mismatched directories fail and require a new destination; no incremental checkpoint is implemented.
+
+Use upstream objects in config to record track/source/assignment IDs, namespace, key/join, cohort/gates and prior run fingerprints. Blank upstream is legitimate for a raw standalone input; do not fabricate validation. New exploratory artifacts do not automatically become current annotations. Keep model NOT_RUN, synthetic smoke PASS, biological UNVERIFIED and real validation states distinct. PNG is the default figure artifact for these tools; do not produce paired PDF.
+
+Handoff should preserve every cell (including missing/zero/under-supported status) unless an explicit selection contract says otherwise. A child stage validates upstream keys, label evidence and relevant scope; it does not inherit biological authority from a successful file decode. A new cell set requires rebuilt expression and geometry-derived products. Expression reclustering uses retained counts and fresh HVG/PCA/correction/neighbors/UMAP/Leiden, while spatial-composition clustering does not use that gate.
+
+The portable behavior suite is `python <skills-root>/_shared/spatial/tests/test_portable_tools.py` in an already compatible environment. It copies skill tools and shared helpers into isolated temporary projects without the project package/registry, invokes CLIs and reopens artifacts. It covers rings/orientation, joins, matrices, aliases/vote review, center/contributor isolation, NMF phenotype features, permutation margins/missing/families and complete-result resume. Optional `SPATIAL_TEST_COMMAND_LOG` and `SPATIAL_TEST_ARTIFACT_DIR` retain actual commands and outputs at new caller-selected paths. COMMOT model execution uses the existing runtime probe separately; requested resegmentation models and real-data parameter tuning are not validated by this suite.

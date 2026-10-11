@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA Preprocessing and QC"
+  short_description: "Capture-aware scRNA and snRNA quality control"
+  default_prompt: "Use $sc-preprocessing-qc to perform the corresponding single-cell stage with declared matrices and evidence."

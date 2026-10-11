@@ -82,8 +82,22 @@ def discover(repo_root: Path) -> list[dict[str, str]]:
 
 def render(repo_root: Path) -> str:
     records = discover(repo_root)
+    dependencies = json.loads((repo_root / "dependencies.json").read_text())
+    names = {record["name"] for record in records}
+    if set(dependencies) != names:
+        raise ValueError("dependencies.json must declare exactly the catalogued skills")
+    for record in records:
+        entry = dependencies[record["name"]]
+        if set(entry) != {"skills", "resources"} or set(entry["skills"]) - names:
+            raise ValueError(f"Invalid dependencies for {record['name']}")
+        for resource in entry["resources"]:
+            path = (repo_root / resource).resolve()
+            if not path.is_relative_to(repo_root / "skills" / "_shared") or not path.is_dir():
+                raise ValueError(f"Invalid shared resource: {resource}")
+        record["dependencies"] = sorted(set(entry["skills"]))
+        record["shared_resources"] = sorted(set(entry["resources"]))
     payload = {
-        "schema_version": 1,
+        "schema_version": 2,
         "skill_count": len(records),
         "skills": records,
     }

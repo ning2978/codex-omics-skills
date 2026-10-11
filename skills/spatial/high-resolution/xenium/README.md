@@ -9,4 +9,3 @@
 | `xenium-roi-dapi-overlays` | ROI DAPI crop 上绘制 label centroid overlay。 |
 | `xenium-scrna-label-transfer` | scRNA 参考标签投射到 Xenium。 |
 | `xenium-scimap-neighborhood-analysis` | scimap RCN、目标细胞 NMF 邻域状态和尺度敏感性分析。 |
-| `xenium-rcn-anchor-nearest-cell-analysis` | 在冻结 RCN/CN 内做同 ROI anchor-nearest-cell 距离分析。 |

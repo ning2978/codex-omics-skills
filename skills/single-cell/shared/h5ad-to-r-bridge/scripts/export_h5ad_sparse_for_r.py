@@ -50,6 +50,7 @@ def matrix_stats(matrix: sparse.spmatrix) -> dict[str, object]:
             "min_nonzero": None,
             "max_nonzero": None,
             "nonnegative": True,
+            "all_finite": True,
             "integer_like": True,
             "max_integer_abs_diff": 0.0,
         }
@@ -60,6 +61,7 @@ def matrix_stats(matrix: sparse.spmatrix) -> dict[str, object]:
         "min_nonzero": float(np.min(data)),
         "max_nonzero": float(np.max(data)),
         "nonnegative": bool(np.min(data) >= 0),
+        "all_finite": bool(np.isfinite(data).all()),
         "integer_like": bool(max_diff <= 1e-6),
         "max_integer_abs_diff": max_diff,
     }
@@ -88,14 +90,16 @@ def write_lines_gz(values: list[str], path: Path) -> None:
 
 
 def write_features(adata: ad.AnnData, path: Path) -> None:
-    gene_names = adata.var_names.astype(str).tolist()
+    gene_names = adata.var["gene_symbol"].astype(str).tolist() if "gene_symbol" in adata.var else adata.var_names.astype(str).tolist()
     gene_ids = None
     for key in ["gene_ids", "gene_id", "feature_id", "ensembl_id"]:
         if key in adata.var.columns:
             gene_ids = adata.var[key].astype(str).tolist()
             break
     if gene_ids is None:
-        gene_ids = gene_names
+        gene_ids = adata.var_names.astype(str).tolist()
+    if len(set(gene_ids)) != len(gene_ids) or any(not g for g in gene_ids):
+        raise ValueError("Export needs unique nonempty feature IDs; duplicate symbols cannot be used as keys.")
     feature_types = adata.var["feature_types"].astype(str).tolist() if "feature_types" in adata.var.columns else ["Gene Expression"] * len(gene_names)
     with gzip.open(path, "wt") as handle:
         for gene_id, gene_name, feature_type in zip(gene_ids, gene_names, feature_types, strict=True):
@@ -110,6 +114,8 @@ def metadata_frame(adata: ad.AnnData) -> pd.DataFrame:
         if np.array_equal(existing, obs_names):
             meta = meta.drop(columns=["barcode"])
         else:
+            if "source_barcode" in meta.columns:
+                raise ValueError("source_barcode already exists; preserve the original barcode map explicitly")
             meta = meta.rename(columns={"barcode": "source_barcode"})
     meta.insert(0, "barcode", adata.obs_names.astype(str))
     for col in meta.columns:
@@ -172,9 +178,14 @@ def export_reductions(adata: ad.AnnData, output_dir: Path) -> list[str]:
     for key in sorted(adata.obsm.keys()):
         if key == "spatial":
             continue
-        values = np.asarray(adata.obsm[key])
+        values = adata.obsm[key]
+        values = values.toarray() if sparse.issparse(values) else np.asarray(values)
         if values.ndim != 2 or values.shape[0] != adata.n_obs:
-            continue
+            raise ValueError(f"Cannot preserve obsm[{key!r}] as a reduction; unsupported shape")
+        if values.dtype.kind not in "fiu" or not np.isfinite(values).all():
+            raise ValueError(f"Reduction {key!r} must be a finite numeric matrix")
+        if not key or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in key):
+            raise ValueError(f"Unsafe reduction filename key: {key!r}")
         reductions_dir.mkdir(parents=True, exist_ok=True)
         cols = [f"{key}_{i + 1}" for i in range(values.shape[1])]
         df = pd.DataFrame(values, index=adata.obs_names.astype(str), columns=cols)
@@ -192,6 +203,8 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     adata = ad.read_h5ad(args.input_h5ad)
+    if not adata.obs_names.is_unique or not adata.var_names.is_unique:
+        raise ValueError("Unique cell and feature IDs required; do not silently make duplicates unique.")
     if args.counts_layer not in adata.layers:
         raise KeyError(f"Missing layer {args.counts_layer!r}; available layers: {list(adata.layers.keys())}")
     if args.label_key and args.label_key not in adata.obs.columns:
@@ -199,6 +212,8 @@ def main() -> None:
 
     counts = as_sparse(adata.layers[args.counts_layer], f"layers[{args.counts_layer!r}]", args.allow_dense_input)
     stats_before = matrix_stats(counts)
+    if not stats_before.get("all_finite", True):
+        raise ValueError("Counts contain nonfinite values")
     if not stats_before["nonnegative"]:
         raise ValueError("Counts contain negative values.")
     if not stats_before["integer_like"]:
@@ -209,6 +224,11 @@ def main() -> None:
     write_mtx_gz(counts_gene_by_obs, args.output_dir / "counts.mtx.gz")
     write_lines_gz(adata.obs_names.astype(str).tolist(), args.output_dir / "barcodes.tsv.gz")
     write_features(adata, args.output_dir / "features.tsv.gz")
+    feature_meta = adata.var.copy()
+    if "source_var_name" in feature_meta:
+        raise ValueError("source_var_name is reserved for the bridge feature mapping")
+    feature_meta.insert(0, "source_var_name", adata.var_names.astype(str))
+    feature_meta.to_csv(args.output_dir / "feature_metadata.csv", index=False)
     metadata_frame(adata).to_csv(args.output_dir / "metadata.csv", index=False)
 
     x_exported = False
@@ -224,6 +244,7 @@ def main() -> None:
     reductions = export_reductions(adata, args.output_dir) if args.export_reductions else []
 
     manifest = {
+        "schema_version": 2,
         "input_h5ad": str(args.input_h5ad),
         "mode": args.mode,
         "counts_layer": args.counts_layer,
@@ -246,6 +267,7 @@ def main() -> None:
             "barcodes": "barcodes.tsv.gz",
             "features": "features.tsv.gz",
             "metadata": "metadata.csv",
+            "feature_metadata": "feature_metadata.csv",
             "spatial_positions": "spatial/tissue_positions.csv" if args.mode == "st" else None,
         },
     }

@@ -1,4 +1,4 @@
 interface:
-  display_name: "Single-Cell Subcluster Analysis"
-  short_description: "Recluster and annotate single-cell subsets"
-  default_prompt: "Use $sc-subcluster-analysis to recluster and annotate a filtered single-cell subset from raw counts."
+  display_name: "Sc Subcluster Analysis"
+  short_description: "Sc Subcluster Analysis workflow guidance"
+  default_prompt: "Use $sc-subcluster-analysis to guide this task with its input and validation contracts."

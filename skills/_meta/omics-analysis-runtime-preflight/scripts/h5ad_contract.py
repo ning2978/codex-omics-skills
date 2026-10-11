@@ -1,259 +1,193 @@
 #!/usr/bin/env python3
-"""Validate a representative AnnData contract using a backed, bounded read."""
-
+"""Read H5AD contracts directly with bounded HDF5 matrix chunks (metadata is O(keys))."""
 from __future__ import annotations
-
 import argparse
 import json
-import math
 import platform
 import sys
-import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Sequence
 
 
-def utc_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+def shape_of(node):
+    import h5py
+    if isinstance(node, h5py.Dataset):
+        return tuple(node.shape)
+    if "shape" in node.attrs:
+        return tuple(map(int, node.attrs["shape"]))
+    if node.attrs.get("encoding-type") == "dataframe":
+        return (len(node[node.attrs.get("_index", "_index")]), len(node.attrs["column-order"]))
+    raise ValueError(f"Unsupported matrix encoding at {node.name}")
 
 
-def add_check(
-    checks: list[dict[str, Any]],
-    name: str,
-    passed: bool,
-    evidence: Any,
-    *,
-    required: bool = True,
-) -> None:
-    checks.append(
-        {
-            "name": name,
-            "status": "PASS" if passed else ("FAIL" if required else "WARN"),
-            "required": required,
-            "evidence": evidence,
-        }
-    )
-
-
-def materialize_sample(matrix: Any, n_rows: int, n_cols: int) -> tuple[Any, str]:
-    from scipy import sparse
-
-    sampled = matrix[:n_rows, :n_cols]
-    if hasattr(sampled, "to_memory"):
-        sampled = sampled.to_memory()
-    if sparse.issparse(sampled):
-        return sampled.data, f"{type(sampled).__name__}.data"
+def matrix_chunks(node, rows, cols, chunk_values):
+    import h5py
     import numpy as np
+    if isinstance(node, h5py.Dataset):
+        for row in range(rows):
+            for col in range(0, cols, chunk_values):
+                yield np.asarray(node[row:row+1, col:min(cols, col+chunk_values)]).ravel()
+        return
+    encoding = node.attrs.get("encoding-type")
+    if isinstance(encoding, bytes):
+        encoding = encoding.decode()
+    if encoding in {"csr_matrix", "csc_matrix"}:
+        major, minor = (rows, cols) if encoding == "csr_matrix" else (cols, rows)
+        start, end = int(node["indptr"][0]), int(node["indptr"][major])
+        for offset in range(start, end, chunk_values):
+            limit = min(end, offset+chunk_values)
+            indices = node["indices"][offset:limit]
+            values = node["data"][offset:limit]
+            yield values[indices < minor]
+        return
+    if encoding == "dataframe":
+        for key in node.attrs["column-order"][:cols]:
+            col = node[str(key)]
+            if not isinstance(col, h5py.Dataset):
+                raise ValueError("Non-numeric dataframe embedding")
+            for offset in range(0, rows, chunk_values):
+                yield col[offset:min(rows, offset+chunk_values)]
+        return
+    raise ValueError(f"Unsupported matrix encoding: {encoding}")
 
-    return np.asarray(sampled).reshape(-1), type(sampled).__name__
+
+def numeric_summary(chunks):
+    import numpy as np
+    count = 0
+    finite = nonnegative = integer_like = True
+    minimum = maximum = None
+    for values in chunks:
+        values = np.asarray(values)
+        count += values.size
+        valid = np.isfinite(values)
+        finite &= bool(valid.all())
+        good = values[valid]
+        if good.size:
+            low, high = float(good.min()), float(good.max())
+            minimum = low if minimum is None else min(minimum, low)
+            maximum = high if maximum is None else max(maximum, high)
+            nonnegative &= bool(low >= 0)
+            integer_like &= bool(np.allclose(good, np.rint(good), atol=1e-6, rtol=0))
+    # Empty stored sparse data represents valid implicit zeros.
+    return {"sampled_values": int(count), "all_finite": finite,
+            "nonnegative": nonnegative, "integer_like": integer_like,
+            "minimum": minimum, "maximum": maximum}
 
 
-def resolve_count_matrix(adata: Any, source: str) -> tuple[Any, str]:
+def resolve_count_matrix(handle, source):
     if source == "auto":
-        if "counts" in adata.layers:
-            return adata.layers["counts"], "layer:counts"
-        if adata.raw is not None:
-            return adata.raw.X, "raw"
-        return adata.X, "X"
-    if source == "X":
-        return adata.X, "X"
-    if source == "raw":
-        if adata.raw is None:
-            raise KeyError("adata.raw is absent")
-        return adata.raw.X, "raw"
-    if source.startswith("layer:"):
-        key = source.split(":", 1)[1]
-        if key not in adata.layers:
-            raise KeyError(f"layers[{key!r}] is absent")
-        return adata.layers[key], f"layer:{key}"
-    raise ValueError(f"Unsupported count source: {source}")
+        for candidate in ("layer:counts", "raw", "X"):
+            try:
+                return resolve_count_matrix(handle, candidate)
+            except KeyError:
+                pass
+        raise KeyError("No count candidate")
+    path = "raw/X" if source == "raw" else "layers/"+source.split(":", 1)[1] if source.startswith("layer:") else "X" if source == "X" else None
+    if path is None:
+        raise ValueError(f"Unsupported count source: {source}")
+    return handle[path], source
 
 
-def numeric_summary(values: Any) -> dict[str, Any]:
+def read_index(group):
     import numpy as np
-
-    values = np.asarray(values)
-    finite = np.isfinite(values)
-    finite_values = values[finite]
-    if finite_values.size:
-        minimum = float(finite_values.min())
-        maximum = float(finite_values.max())
-        mean = float(finite_values.mean())
-        integer_like = bool(np.allclose(finite_values, np.rint(finite_values), atol=1e-6, rtol=0.0))
-        nonnegative = minimum >= 0.0
-    else:
-        minimum = maximum = mean = None
-        integer_like = False
-        nonnegative = False
-    return {
-        "sampled_values": int(values.size),
-        "finite_values": int(finite.sum()),
-        "all_finite": bool(finite.all()),
-        "nonnegative": nonnegative,
-        "integer_like": integer_like,
-        "minimum": minimum,
-        "maximum": maximum,
-        "mean": mean,
-    }
+    key = group.attrs.get("_index", "_index")
+    return np.asarray(group[key].asstr()[:])
 
 
-def write_report(report: dict[str, Any], output: Path | None) -> None:
-    rendered = json.dumps(report, indent=2, ensure_ascii=False, sort_keys=True)
-    if output is not None:
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(rendered + "\n", encoding="utf-8")
-    print(rendered)
-
-
-def build_parser() -> argparse.ArgumentParser:
+def main(argv=None):
+    import h5py
+    import numpy as np
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--kind", choices=("scrna", "xenium", "visium", "generic"), required=True)
-    parser.add_argument(
-        "--count-source",
-        default="auto",
-        help="One of auto, X, raw, or layer:<name>.",
-    )
-    parser.add_argument("--obs-key", action="append", default=[], help="Required obs key; repeatable.")
-    parser.add_argument("--obsm-key", action="append", default=[], help="Additional required obsm key; repeatable.")
+    parser.add_argument("--count-source", default="auto")
+    parser.add_argument("--obs-key", action="append", default=[])
+    parser.add_argument("--obsm-key", action="append", default=[])
     parser.add_argument("--sample-rows", type=int, default=256)
     parser.add_argument("--sample-cols", type=int, default=512)
+    parser.add_argument("--chunk-values", type=int, default=65536)
+    parser.add_argument("--full-count-scan", action="store_true")
     parser.add_argument("--output", type=Path)
-    return parser
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
-    checks: list[dict[str, Any]] = []
-    report: dict[str, Any] = {
-        "schema_version": 1,
-        "check": "h5ad_contract",
-        "generated_at_utc": utc_now(),
-        "input": str(args.input.resolve()),
-        "kind": args.kind,
-        "requested_count_source": args.count_source,
-        "python": {"executable": str(Path(sys.executable).resolve()), "version": platform.python_version()},
-        "sampling_limit": {"rows": args.sample_rows, "columns": args.sample_cols},
-        "sampling_disclaimer": "Matrix integrity checks cover a bounded sample, not every stored value.",
-        "checks": checks,
-    }
-
-    adata = None
+    args = parser.parse_args(argv)
+    if min(args.sample_rows, args.sample_cols, args.chunk_values) < 1:
+        parser.error("Sampling/chunk limits must be positive")
+    checks = []
+    def check(name, ok, evidence, required=True):
+        checks.append({"name": name, "status": "PASS" if ok else "FAIL" if required else "WARN",
+                       "required": required, "evidence": evidence})
+    report = {"schema_version": 2, "check": "h5ad_contract",
+              "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+              "input": str(args.input.resolve()), "kind": args.kind,
+              "python": {"executable": sys.executable, "version": platform.python_version()},
+              "requested_count_source": args.count_source,
+              "reader": "h5py_direct_chunked", "chunk_values": args.chunk_values,
+              "sampling_limit": {"rows": args.sample_rows, "columns": args.sample_cols},
+              "sampling_disclaimer": "Only requested count values are scanned; metadata/key uniqueness uses O(number of keys) memory. Numerics do not prove raw-count provenance.",
+              "checks": checks}
     try:
-        import anndata as ad
-        import numpy as np
-
-        add_check(checks, "input_exists", args.input.is_file(), {"path": str(args.input), "size_bytes": args.input.stat().st_size if args.input.is_file() else None})
-        if not args.input.is_file():
-            raise FileNotFoundError(args.input)
-
-        adata = ad.read_h5ad(args.input, backed="r")
-        add_check(checks, "backed_reopen", True, {"isbacked": bool(adata.isbacked)})
-        report["shape"] = [int(adata.n_obs), int(adata.n_vars)]
-        report["keys"] = {
-            "obs": list(map(str, adata.obs.columns)),
-            "var": list(map(str, adata.var.columns)),
-            "layers": list(map(str, adata.layers.keys())),
-            "obsm": list(map(str, adata.obsm.keys())),
-            "uns": list(map(str, adata.uns.keys())),
-            "raw_present": adata.raw is not None,
-        }
-        add_check(checks, "nonzero_shape", adata.n_obs > 0 and adata.n_vars > 0, report["shape"])
-        add_check(checks, "unique_obs_names", bool(adata.obs_names.is_unique), {"n_obs": int(adata.n_obs)})
-        add_check(checks, "unique_var_names", bool(adata.var_names.is_unique), {"n_vars": int(adata.n_vars)})
-
-        for key in args.obs_key:
-            present = key in adata.obs
-            evidence: dict[str, Any] = {"key": key, "present": present}
-            if present:
-                values = adata.obs[key]
-                evidence.update(
-                    {
-                        "missing": int(values.isna().sum()),
-                        "unique": int(values.nunique(dropna=True)),
-                        "examples": list(map(str, values.dropna().astype(str).unique()[:8])),
-                    }
-                )
-            add_check(checks, f"obs_key:{key}", present and evidence.get("missing", 1) == 0, evidence)
-
-        required_obsm = list(dict.fromkeys((*args.obsm_key, *(("spatial",) if args.kind in {"xenium", "visium"} else ()))))
-        for key in required_obsm:
-            present = key in adata.obsm
-            evidence = {"key": key, "present": present}
-            valid = False
-            if present:
-                matrix = adata.obsm[key]
-                rows = min(args.sample_rows, adata.n_obs)
-                sample = matrix[:rows]
-                if hasattr(sample, "to_memory"):
-                    sample = sample.to_memory()
-                sample = np.asarray(sample)
-                evidence.update(
-                    {
-                        "shape": list(map(int, matrix.shape)),
-                        "sample_rows": int(rows),
-                        "sample_all_finite": bool(np.isfinite(sample).all()),
-                    }
-                )
-                valid = matrix.shape[0] == adata.n_obs and matrix.shape[1] >= 2 and evidence["sample_all_finite"]
-            add_check(checks, f"obsm_key:{key}", valid, evidence)
-
-        try:
-            count_matrix, resolved_source = resolve_count_matrix(adata, args.count_source)
-            report["resolved_count_source"] = resolved_source
-            n_rows = min(max(1, args.sample_rows), adata.n_obs)
-            n_cols = min(max(1, args.sample_cols), count_matrix.shape[1])
-            values, representation = materialize_sample(count_matrix, n_rows, n_cols)
-            summary = numeric_summary(values)
-            summary.update(
-                {
-                    "resolved_source": resolved_source,
-                    "matrix_shape": list(map(int, count_matrix.shape)),
-                    "sample_shape": [int(n_rows), int(n_cols)],
-                    "sample_representation": representation,
-                }
-            )
+        with h5py.File(args.input, "r") as handle:
+            check("hdf5_reopen", True, {"reader": "h5py", "no_anndata_or_layer_materialization": True})
+            obs, var = read_index(handle["obs"]), read_index(handle["var"])
+            n_obs, n_vars = len(obs), len(var)
+            report["shape"] = [n_obs, n_vars]
+            report["keys"] = {k: list(handle[k].keys()) if k in handle else [] for k in ("obs", "var", "layers", "obsm", "uns")}
+            check("nonzero_shape", n_obs > 0 and n_vars > 0, report["shape"])
+            check("unique_obs_names", len(np.unique(obs)) == n_obs, {"n_obs": n_obs})
+            check("unique_var_names", len(np.unique(var)) == n_vars, {"n_vars": n_vars})
+            for key in args.obs_key:
+                present = key in handle["obs"]
+                evidence = {"key": key, "present": present}
+                missing = 0
+                if present:
+                    node = handle["obs"][key]
+                    if isinstance(node, h5py.Group) and "codes" in node:
+                        missing = sum(int((node["codes"][i:i+args.chunk_values] < 0).sum()) for i in range(0, n_obs, args.chunk_values))
+                    elif isinstance(node, h5py.Dataset):
+                        for i in range(0, n_obs, args.chunk_values):
+                            vals = node[i:i+args.chunk_values]
+                            missing += int((~np.isfinite(vals)).sum()) if vals.dtype.kind in "fci" else int(np.isin(vals, [b"", ""]).sum())
+                    else:
+                        raise ValueError(f"Unsupported obs encoding: {key}")
+                    evidence["missing"] = missing
+                check("obs_key:"+key, present and missing == 0, evidence)
+            required_obsm = list(dict.fromkeys(args.obsm_key + (["spatial"] if args.kind in {"xenium", "visium"} else [])))
+            for key in required_obsm:
+                path = "obsm/"+key
+                if path not in handle:
+                    check("obsm_key:"+key, False, {"present": False})
+                    continue
+                node = handle[path]
+                shape = shape_of(node)
+                if len(shape) != 2:
+                    check("obsm_key:"+key, False, {"shape": list(shape)})
+                    continue
+                summary = numeric_summary(matrix_chunks(node, min(args.sample_rows, shape[0]), shape[1], args.chunk_values))
+                check("obsm_key:"+key, shape[0] == n_obs and shape[1] >= 2 and summary["all_finite"], {"shape": list(shape), "sample": summary})
+            node, resolved = resolve_count_matrix(handle, args.count_source)
+            report["resolved_count_source"] = resolved
+            check("explicit_count_source", args.count_source != "auto", {"resolved": resolved, "provenance_verified": False}, required=False)
+            shape = shape_of(node)
+            expected_vars = len(read_index(handle["raw/var"])) if resolved == "raw" else n_vars
+            check("count_shape", shape == (n_obs, expected_vars), {"shape": list(shape)})
+            rows, cols = shape if args.full_count_scan else (min(args.sample_rows, shape[0]), min(args.sample_cols, shape[1]))
+            summary = numeric_summary(matrix_chunks(node, rows, cols, args.chunk_values))
+            summary.update(matrix_shape=list(shape), sample_shape=[rows, cols], scope="full_stored_count_values" if args.full_count_scan else "sampled_count_values")
             report["count_sample"] = summary
-            count_ok = summary["all_finite"] and summary["nonnegative"] and summary["integer_like"]
-            add_check(checks, "sampled_raw_count_contract", count_ok, summary)
-            add_check(
-                checks,
-                "sample_contains_nonzero_values",
-                bool(summary["sampled_values"] and summary["maximum"] is not None and summary["maximum"] > 0),
-                {"maximum": summary["maximum"], "sampled_values": summary["sampled_values"]},
-                required=False,
-            )
-        except Exception as exc:
-            add_check(
-                checks,
-                "sampled_raw_count_contract",
-                False,
-                {"error": f"{type(exc).__name__}: {exc}"},
-            )
-
+            check("full_raw_count_numerics" if args.full_count_scan else "sampled_raw_count_contract",
+                  summary["all_finite"] and summary["nonnegative"] and summary["integer_like"], summary)
+            check("sample_contains_nonzero_values", summary["maximum"] is not None and summary["maximum"] > 0, summary, required=False)
     except Exception as exc:
-        report["exception"] = {
-            "type": type(exc).__name__,
-            "message": str(exc),
-            "traceback": traceback.format_exc(),
-        }
-        if not any(check["name"] == "backed_reopen" for check in checks):
-            add_check(checks, "backed_reopen", False, report["exception"])
-    finally:
-        if adata is not None and getattr(adata, "file", None) is not None:
-            try:
-                adata.file.close()
-            except Exception:
-                pass
-
-    required_failures = [check["name"] for check in checks if check["required"] and check["status"] == "FAIL"]
-    warnings = [check["name"] for check in checks if check["status"] == "WARN"]
-    report["required_failures"] = required_failures
-    report["warnings"] = warnings
-    report["status"] = "FAIL" if required_failures else ("WARN" if warnings else "PASS")
-    write_report(report, args.output)
-    return 1 if required_failures else 0
+        report["exception"] = {"type": type(exc).__name__, "message": str(exc)}
+        check("read_contract", False, report["exception"])
+    report["required_failures"] = [c["name"] for c in checks if c["required"] and c["status"] == "FAIL"]
+    report["warnings"] = [c["name"] for c in checks if c["status"] == "WARN"]
+    report["status"] = "FAIL" if report["required_failures"] else "WARN" if report["warnings"] else "PASS"
+    rendered = json.dumps(report, indent=2, ensure_ascii=False)
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered+"\n", encoding="utf-8")
+    print(rendered)
+    return int(bool(report["required_failures"]))
 
 
 if __name__ == "__main__":

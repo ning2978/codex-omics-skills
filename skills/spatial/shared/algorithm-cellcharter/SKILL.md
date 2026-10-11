@@ -74,3 +74,10 @@ After a run, confirm:
 ## References
 
 Read `references/repository-api-notes.md` when modifying or reviewing CellCharter scripts.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

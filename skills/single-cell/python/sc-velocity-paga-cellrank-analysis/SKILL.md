@@ -37,30 +37,28 @@ Never assume barcode formats match. Normalize barcodes explicitly and audit over
 
 ```python
 adata = sc.read_h5ad("annotated.h5ad")
-ldata = scv.read("sample.loom", cache=True)
-
-shared = adata.obs_names.intersection(ldata.obs_names)
-if len(shared) == 0:
-    raise ValueError("No shared cells between AnnData and loom; inspect barcode formatting.")
-
-adata = adata[shared].copy()
-ldata = ldata[shared, adata.var_names.intersection(ldata.var_names)].copy()
+ldata = sc.read_loom("sample.loom")
+# First apply an audited capture-aware key mapping to both objects.
+# sc_contracts is the shared workflow's resolved scripts/sc_contracts.py module.
+from sc_contracts import merge_velocity_layers, validate_velocity
+adata_velocity = merge_velocity_layers(adata, ldata, allow_gene_subset=False)
 ```
 
-For multiple samples, process each sample's loom with sample-aware barcode prefixes before concatenating.
+For multiple captures use library-aware keys before concatenation. Require unique stable gene IDs, not duplicate symbols. The helper reorders both axes and actually copies velocity layers. Missing analyzed cells fail; use an explicit chosen subset/attrition ledger rather than silent intersection. Gene restriction needs an explicit derivative and omitted-gene report. Preserve original expression/counts object: velocity normalization modifies a working derivative.
 
 ## scVelo Workflow
 
 ```python
-scv.pp.filter_and_normalize(adata, min_shared_counts=20, n_top_genes=2000)
-scv.pp.moments(adata, n_pcs=30, n_neighbors=30)
-scv.tl.velocity(adata, mode="stochastic")
-scv.tl.velocity_graph(adata)
-scv.tl.velocity_embedding(adata, basis="umap")
-scv.tl.latent_time(adata)
+validate_velocity(adata_velocity, "stochastic")
+scv.pp.filter_and_normalize(adata_velocity, min_shared_counts=20, n_top_genes=2000)
+scv.pp.moments(adata_velocity, n_pcs=30, n_neighbors=30)
+scv.tl.velocity(adata_velocity, mode="stochastic")
+scv.tl.velocity_graph(adata_velocity)
+scv.tl.velocity_embedding(adata_velocity, basis="umap")
+scv.tl.velocity_pseudotime(adata_velocity)  # not dynamical latent time
 ```
 
-Use `mode="dynamical"` only after `scv.tl.recover_dynamics` succeeds on a tractable subset or final gene set.
+For **dynamical** mode run `scv.tl.recover_dynamics(adata_velocity)` after preparation, inspect fitted genes/convergence and then `validate_velocity(..., "dynamical")`, `velocity(mode="dynamical")`, `velocity_graph`, and `latent_time`. Never call `latent_time` in a stochastic-only run. Record fitted gene count/failed fits, kinetic assumptions, preprocessing/graph source, root/terminal rules and exact scVelo/CellRank versions (API checks validated with 0.3.3/2.0.7). PAGA/CellRank examples below assume `adata` is the validated velocity derivative with an appropriate graph; PAGA alone can use an expression graph without velocity layers.
 
 ## PAGA Workflow
 
@@ -106,3 +104,10 @@ Record terminal-state selection rules and avoid manually forcing states without 
 - RNA velocity needs unspliced/spliced data; do not run it on ordinary expression-only h5ad.
 - PAGA alone is topology, not velocity.
 - CellRank fate probabilities are model outputs and should be validated against marker genes and known biology.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

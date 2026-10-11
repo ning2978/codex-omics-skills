@@ -11,6 +11,8 @@ Build reusable, reviewable R workflows for Monocle2 trajectory analysis from ann
 
 ## Input Contract
 
+Run the exact environment's `Rscript --vanilla`, log R version, `.libPaths()`, `find.package("monocle")`, package versions and `sessionInfo()`. Check dependencies load from compatible declared library paths, not a global R profile/R 4.5 tree injected into an R 4.3 environment. Set environment-specific library paths explicitly if needed; an environment name or `--vanilla` alone cannot prove compatible packages. Use a check-only import before analysis.
+
 Before running or writing code, identify:
 
 - input object path and object type, usually Seurat RDS
@@ -71,11 +73,13 @@ After subsetting, remove all-zero genes and convert to `dgCMatrix`.
 2. Create the CDS with `VGAM::negbinomial.size()`.
 3. Run `estimateSizeFactors()` and `detectGenes()`.
 4. Select expressed genes with a minimum cell threshold, commonly `num_cells_expressed >= 10`.
-5. Run `monocle::differentialGeneTest()` using the label column, unless the analysis requires a different model.
-6. Sort by `qval`, keep genes passing the cutoff, cap at `max_ordering_genes`, and refuse under-supported runs below `min_ordering_genes`.
+5. Select ordering genes independently of final labels by default (expressed dispersion/HVG candidates or an external supported temporal program), avoiding dominant batch/stress artifacts. Record selection/filtering and use `differentialGeneTest` only when its model matches the question. Label-dependent selection is an explicitly circular exploratory mode, not validation of those labels.
+6. For a label/time-model selection, record formula/covariates, sort by qval, apply declared cutoff/cap and report insufficient support. Keep full selection statistics. Compare at least a supported alternative ordering set (label-independent versus label-dependent if used) for topology/pseudotime conclusions.
 7. Run `setOrderingFilter()`, `estimateDispersions()`, `reduceDimension(method = "DDRTree")`, and `orderCells()`.
 8. Choose the root state by a documented rule, usually highest fraction or count of the `start-label`.
 9. Re-run `orderCells(cds, root_state = ...)`.
+
+Assess plausible alternative roots using independent time/marker knowledge. Export topology/branch assignment and cell-wise pseudotime rank/direction agreement across ordering-gene/root candidates; compare sample/donor support. If orientation/topology changes, report ambiguity. A start label sets an operational root, not observed ancestry. Generic trajectory tests do not replace sample-level condition statistics.
 
 Keep warnings from Monocle2 or ggplot2 in the log, but distinguish non-fatal deprecation warnings from real failures.
 
@@ -91,9 +95,9 @@ tables/<analysis_name>_<tag>/ordering_genes.csv
 tables/<analysis_name>_<tag>/root_state_table.csv
 tables/<analysis_name>_<tag>/pseudotime_by_<label_col>.csv
 tables/<analysis_name>_<tag>/pseudotime_by_<subset_col>.csv
-figures/<analysis_name>_<tag>/trajectory_by_pseudotime.png/.pdf
-figures/<analysis_name>_<tag>/trajectory_by_<label_col>.png/.pdf
-figures/<analysis_name>_<tag>/trajectory_by_state.png/.pdf
+figures/<analysis_name>_<tag>/trajectory_by_pseudotime.png
+figures/<analysis_name>_<tag>/trajectory_by_<label_col>.png
+figures/<analysis_name>_<tag>/trajectory_by_state.png
 reports/<analysis_name>_<tag>_summary.md
 reports/run_<analysis_name>_<tag>.log
 ```
@@ -121,7 +125,7 @@ tail -n 80 reports/run_<analysis_name>_<tag>.log
 find data/<analysis_name>_<tag> tables/<analysis_name>_<tag> figures/<analysis_name>_<tag> -maxdepth 1 -type f | sort
 wc -l tables/<analysis_name>_<tag>/cell_pseudotime.csv
 wc -l tables/<analysis_name>_<tag>/ordering_genes.csv
-du -h data/<analysis_name>_<tag>/*.rds figures/<analysis_name>_<tag>/*.png figures/<analysis_name>_<tag>/*.pdf
+du -h data/<analysis_name>_<tag>/*.rds figures/<analysis_name>_<tag>/*.png
 ```
 
 Expected checks:
@@ -129,7 +133,7 @@ Expected checks:
 - cell pseudotime rows equal selected cells plus one header
 - ordering genes rows equal selected ordering genes plus one header
 - CDS RDS exists and is non-trivial in size
-- trajectory PNG/PDF files are non-empty
+- trajectory PNG files are non-empty
 - log ends with a finished message or report path
 - summary records input object, filters, target counts, ordering gene count, and root state
 
@@ -146,3 +150,10 @@ For subset-filtered runs, also verify excluded groups are absent from `cell_pseu
 ## Runner Pattern
 
 A robust Monocle2 runner should parameterize labels, q-value thresholds, ordering gene caps, seed, check-only mode, group filters, output tags, Seurat v5 count layers, root-state selection, table/figure exports, and a Markdown summary. Reuse that structure for new project-specific runners, but do not hard-code one project's labels into a generic workflow.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

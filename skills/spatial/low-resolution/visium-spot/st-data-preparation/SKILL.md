@@ -116,3 +116,10 @@ Read these references only when needed:
 - Prefer current project docs and current outputs over old notebooks and archived scripts.
 - If you mention implementation history, say clearly whether a file is a reference implementation or the recommended path.
 - Do not present archived scripts as the default execution entrypoint unless the user explicitly asks for legacy reproduction.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

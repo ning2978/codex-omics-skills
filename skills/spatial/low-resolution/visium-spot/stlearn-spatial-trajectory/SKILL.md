@@ -117,3 +117,10 @@ Start with low permutations for smoke tests only; use higher values for final an
 - stLearn trajectory is spatial-pseudotime inference, not lineage proof.
 - For RNA velocity or fate probabilities, use `sc-velocity-paga-cellrank-analysis`.
 - For COMMOT-specific communication, use `algorithm-commot`.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

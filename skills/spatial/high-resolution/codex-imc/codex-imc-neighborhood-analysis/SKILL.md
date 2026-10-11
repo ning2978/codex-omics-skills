@@ -13,20 +13,10 @@ It distills the course `codex.py`, `pro.RCN.py`, and `SOAPy.pro.py` patterns int
 
 ## Environment
 
-Use a dedicated environment that satisfies the target repository's declared
-contract. If the repository provides an environment verifier, run it before
-analysis; a typical adapter may be named `verify_codex_imc_env.py`:
-
-```bash
-conda activate codex-imc
-python /path/to/project/verify_codex_imc_env.py
-```
-
-For non-interactive runs, prefer `conda run` or a repository-owned wrapper:
-
-```bash
-conda run -n codex-imc python /path/to/project/analysis.py --help
-```
+Use the project's validated Python environment. Pair with
+`omics-analysis-runtime-preflight` to verify the actual interpreter and required
+imports. Invoke any project runner with that interpreter; no environment wrapper
+or dataset-specific runner is bundled here.
 
 The supported default stack is AnnData/Scanpy + scimap + Squidpy. SOAPy is optional and should use a separate environment if a concrete SOAPy script is being run, because `SOAPy-st` pins older Scanpy/AnnData/scikit-image/scikit-learn versions that conflict with the verified `codex-imc` stack.
 
@@ -83,3 +73,10 @@ AnnData contract:
 - Spatial graph has no cross-FOV edges.
 - Fractions sum to about 1 within each FOV.
 - PNGs are nonblank and use the same coordinate orientation as the source images.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

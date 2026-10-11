@@ -1,0 +1,4 @@
+interface:
+  display_name: "scRNA Cell Communication"
+  short_description: "Sample-aware ligand-receptor inference"
+  default_prompt: "Use $sc-cell-communication to perform the corresponding single-cell stage with declared matrices and evidence."

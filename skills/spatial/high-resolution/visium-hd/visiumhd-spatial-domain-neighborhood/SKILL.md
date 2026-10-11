@@ -17,6 +17,8 @@ Use this skill after Visium HD bins have been loaded into an AnnData object with
 
 For raw binned Matrix Market plus `tissue_positions.parquet` QC/export, use `visiumhd-qc-analysis` first. For mapping existing CellCharter labels onto H&E, use `visiumhd-cellcharter-visualization`.
 
+When assigning or reviewing biological domain/niche names, read [the joint evidence review](../../../../single-cell/python/sc-marker-annotation/references/annotation-evidence-review.md). Combine differential ranking, sourced canonical/competing programs, biological-unit support and appropriate QC with anatomy/composition. Neighborhood or communication computation on supplied labels does not itself request new annotation.
+
 ## Input Contract
 
 Require:
@@ -29,6 +31,8 @@ Require:
 
 Before analysis, assert coordinates are numeric and not strings. If using 10x H&E plotting, confirm `uns["spatial"][sample_id]["scalefactors"]` exists and do not hard-code a library id.
 
+Declare whether observations are bins or documented segmented-cell profiles. Bin size alone does not establish single-cell purity. For biological review, locate explicit unintegrated gene expression, sample/unit design, applicable QC and available histology/composition; missing checks remain limitations.
+
 ## Workflow Router
 
 1. **Domain discovery**: run Scanpy PCA/neighbors/Leiden or BANKSY. Use this when the output is a spatial domain label such as `molniche`, `banksy_domain`, or `leiden`.
@@ -36,6 +40,8 @@ Before analysis, assert coordinates are numeric and not strings. If using 10x H&
 3. **Differential enrichment**: compute each sample/condition separately or use a method that preserves library boundaries. Never let cross-sample edges enter a spatial graph.
 4. **Ligand-receptor**: run `sq.gr.ligrec` only after cell-type labels are stable. Filter source/target groups explicitly for the biological question.
 5. **Neighborhood niche profile**: convert each bin/cell's local label composition into a feature matrix, cluster that matrix, and interpret clusters as microenvironment states, not new cell types.
+
+For biological naming, rank markers from all available expression-filtered genes in original unintegrated expression, preserving complete statistics plus a candidate view. Do not test scaled/HVG-only, BANKSY-augmented or neighborhood-composition features as gene-expression markers. Check measured canonical/competing programs beyond DE cutoffs, anatomy/composition, unit recurrence and QC. Retain mixed/interface domain hypotheses for coherent multi-lineage bins; domain/niche labels stay separate from cell identities and states.
 
 ## Parameter Defaults
 
@@ -54,13 +60,15 @@ Write outputs under an explicit run directory:
 - differential enrichment table with condition labels and sample/library scope;
 - ligand-receptor table and filtered plot for named source/target groups;
 - spatial plots with y-axis/image orientation checked.
+- for biological naming/review, an evidence table with program sources/availability, positive/competing support, biological-unit support, QC, spatial/composition observations, alternatives and decision/status.
 
 ## Validation
 
 - `obsm["spatial"]` exists, numeric, shape `(n_obs, 2)`, and is not all zeros.
 - Spatial graph has no cross-sample edges when multiple libraries are present.
 - Enrichment matrices contain the same label categories as `obs[cluster_key]`.
-- Differential results use sample/ROI/library-level replicates where the claim is group-level.
+- Group-level differential results use declared independent biological units; ROIs/libraries from one specimen retain their technical or nested structure rather than becoming extra independent replicates.
+- Biological names reflect bin/segmented-cell semantics and joint evidence or an explicit limitation; a mixed bin is not automatically contamination or a pure cell identity.
 - PNGs are nonblank and labels are readable.
 
 ## Source Mapping
@@ -71,3 +79,10 @@ This skill distills these Baidu Netdisk script patterns from `/01_生信培训/�
 - lessons 14-18: `scniche.hd.py`, `coor.hd.py`, `coor.hd.diff.py`, `squidpy_cci.py`, `spatial.nmf.py`.
 
 The course scripts are reference patterns only; many contain hard-coded paths, example labels, or plotting assumptions that must be replaced with project-specific parameters.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

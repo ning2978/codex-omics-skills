@@ -88,16 +88,10 @@ For direct server testing, start with summary plots and QC plots. Spatial panel 
 
 ## Recommended Run Pattern
 
-Use a repository-local visualization adapter that implements the output
-contract in this skill:
-
-```bash
-conda run -n scanpy \
-  python /path/to/project/visualize_cell2location_results.py \
-  --results-dir <cell2location_results_dir>
-```
-
-Add `--generate-spatial` only when you want per-sample spatial maps.
+Use the validated project Python interpreter and a plotting runner that consumes
+the result contract above. Supply its results directory explicitly. No
+project-specific renderer or environment wrapper is bundled. Start with summary
+and QC panels; generate per-sample spatial maps when requested.
 
 ## Author Workflow References
 
@@ -122,3 +116,10 @@ That file extracts the reusable parts of the author workflow:
 - If the plotting logic needs richer CLI controls later, extend the script rather than reintroducing interactive prompts.
 - Treat author Rmd files as design references, not direct execution entrypoints.
 - Keep biological groupings reusable; avoid hard-coding disease- or project-only comparison labels into the generic skill definition.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

@@ -1,108 +1,28 @@
 ---
 name: xenium-scimap-neighborhood-analysis
-description: Use for Xenium scimap neighborhood analysis based on local cell-type composition, including whole-population recurrent cellular neighborhoods, target-cell NMF neighborhood states, radius or KNN sensitivity analysis, ROI-level comparisons, and validation of spatial_count outputs.
+description: Build or review Xenium phenotype-composition RCN and target-cell NMF neighborhoods with separate center/contributor pools, ROI isolation, rank/seed/scale sensitivity and qualified result namespaces.
 ---
 
-# Xenium scimap Neighborhood Analysis
+# Phenotype neighborhoods: RCN and target NMF
 
-## Choose a Mode
+Use one local phenotype-composition representation for RCN and NMF. These are spatial clusters, not cell-expression clusters or new cell identities. Read [methods and portable tools](references/neighborhood-methods.md) before execution and [stage contracts](../../../shared/workflow-st-analysis/references/stage-contract.md) for handoff.
 
-| Question | Mode |
-|---|---|
-| Which recurrent neighborhood types occur across all cells? | RCN: `spatial_count -> spatial_cluster` |
-| Which neighborhood states surround one target phenotype? | Target NMF: `spatial_count -> target subset -> NMF -> Leiden` |
-| Does a conclusion survive another spatial scale? | Radius/KNN sensitivity |
+Require only unique cell key, explicit ROI boundary, coordinate unit, biological-unit nesting, trusted phenotype/evidence grade and selection masks. No expression matrix is needed for composition analysis. Resolve actual project label/RCN roles through the adapter; do not join by row order.
 
-These modes share one input contract and one local phenotype-count matrix. Do not maintain separate skills for them.
+Declare the scientific question, centers and neighbor-contributor pool separately. Default centers are all eligible cells. Excluding epithelial centers keeps every eligible non-epithelial center and the full eligible contributor pool unless the user also excludes epithelial contributors. Epithelial membership comes from declared trusted labels, not a substring. Target NMF selects center rows after counting against the declared contributor pool.
 
-## Shared Input Contract
+Count within each ROI only, explicitly excluding self. Preserve raw counts, labeled-neighbor denominator and proportions. Missing neighbor phenotypes contribute no identity; report them. Zero labeled neighbors yield missing proportions and assignments, with explicit status. Edge/low-support centers stay flagged.
 
-Require:
+- RCN: fit the chosen clustering method to declared counts/proportions.
+- NMF: fit nonnegative neighborhood phenotype features, compare rank and seed using reconstruction, component correspondence and support; lock rank before spatial-scale sensitivity. Optional clustering of NMF coordinates uses an explicitly selected method.
+- Sensitivity: compare radius/KNN definitions, keeping eligible sets, labels and model settings fixed. Equal cluster numbers are never identities across runs.
 
-- an h5ad with `obsm["spatial"]`;
-- an ROI/FOV/library key that prevents neighborhoods spanning images;
-- a trusted phenotype column or a cell/cluster sidecar joined by stable identifiers;
-- consistent coordinate units within every ROI;
-- recorded radius or KNN definition, seed, exclusions, and label provenance.
+The bundled tool provides an explicitly selected KMeans baseline and NMF grid:
 
-Attach and audit labels before neighborhood counting. Never join sidecars by row position unless row identity is explicitly guaranteed.
+```bash
+python <skill-dir>/scripts/neighborhood.py --config <json> --out-dir <new-output>
+```
 
-## Shared Preflight
+It does not silently replace a requested scimap/Leiden method. For that method, inspect the installed API, use the project's validated runner, and apply the same contracts. New results use explicit assignment ID and namespace, remain exploratory, and do not become current automatically.
 
-1. Confirm the requested phenotypes exist after label harmonization.
-2. Exclude removed or untrusted labels explicitly.
-3. Inspect cell density and coordinate units before selecting a radius.
-4. Run `spatial_count` within each ROI/FOV only.
-5. Verify the resulting feature columns are phenotype names, not genes.
-6. Record whether features are raw neighbor counts or transformed proportions and whether the installed scimap version includes the focal cell.
-
-Avoid full-cell downsampling before spatial counting except for a clearly labeled smoke test; it changes every local neighborhood.
-
-When a wrapper or scimap version changes, run a synthetic boundary test with two ROIs that share coordinates but have disjoint phenotypes. Counts for each ROI must contain no phenotype contributed only by the other ROI.
-
-## RCN Mode
-
-1. Build the local phenotype-count matrix with `sm.tl.spatial_count`.
-2. Cluster `spatial_count` with Leiden or KMeans.
-3. Map raw clusters to stable labels such as `RCN1..RCNn`.
-4. Export per-cell assignments, phenotype composition, ROI fractions, and optional group comparisons.
-
-Use ROI or sample fractions as replicates for group-level inference, not individual cells.
-
-## Target-Cell NMF Mode
-
-1. Build neighborhoods using the full eligible cell universe.
-2. Subset target cells only after `spatial_count` is complete.
-3. Set `X` to the target cells' neighborhood phenotype counts.
-4. Fit NMF, then build neighbors and Leiden clusters from NMF coordinates.
-5. Rank phenotype features by neighborhood cluster.
-
-Interpret ranked features as enriched neighbor phenotypes. NMF-Leiden labels are target-cell neighborhood states, not new cell types.
-
-Choose NMF rank from a small grid using reconstruction error, repeated-seed stability, component support, and interpretability. Lock the selected rank before radius sensitivity. Record minimum target cells and minimum cells per reported state.
-
-## Sensitivity Mode
-
-- Compare several biologically plausible radii in the coordinate unit, or compare radius with KNN.
-- Keep labels, eligible cells, seed, NMF components, and clustering parameters fixed when testing spatial scale.
-- Compare composition, assignment correspondence, repeated-seed stability, group-effect direction, support, and NMF reconstruction error.
-- State explicitly when a conclusion is radius-dependent.
-- Flag tissue-edge cells or unusually low neighbor support instead of interpreting them as ordinary neighborhoods.
-
-## Environment
-
-Use the project's validated scimap environment. When creating one, use conda plus pip only and prefer a single compatible Python/package stack for all three modes. Record the versions of Python, scimap, anndata, scanpy, leidenalg, igraph, and scikit-learn. Verify API names against the installed scimap version; the current repository adapter is tested against scimap 2.3.6.
-
-## Output Contract
-
-RCN outputs:
-
-- per-cell assignment and raw-to-stable label map;
-- phenotype-by-RCN composition;
-- RCN counts/fractions by ROI and optional group comparison;
-- parameter record and spatial/composition plots.
-
-Target-NMF outputs:
-
-- target-cell neighborhood assignments;
-- NMF loadings and ranked neighbor phenotypes;
-- cluster counts/fractions by ROI and group;
-- reconstruction error, parameter record, and spatial plots.
-
-Sensitivity outputs:
-
-- per-scale run summary;
-- cross-scale composition and support tables;
-- stability or correspondence table for assignments/components;
-- explicit list of failed or under-supported scales.
-
-## Validation
-
-- Assignment row count matches the recorded analyzed or target-cell count.
-- ROI/FOV boundaries were respected and no cross-ROI neighborhood was created.
-- Fraction tables sum to approximately one within each ROI.
-- NMF columns are neighbor phenotypes, not genes.
-- Group comparisons use independent biological samples. If multiple ROIs are nested within a sample, aggregate at sample level or use a hierarchical model rather than treating ROIs as independent.
-- Small target sets or single-ROI results remain exploratory.
-- A biological claim based on one radius includes a sensitivity result or a stated limitation.
-- A synthetic overlapping-coordinate test proves that the configured image/ROI key blocks cross-ROI neighbors.
+Verify overlapping-coordinate ROIs never share neighbors, centers/contributors can differ, zero-neighbor status persists and NMF columns are phenotypes. Export composition, assignments, loadings/weights, rank/seed/scale comparisons, support by biological unit and manifest. Cells and nested ROIs are not independent biological replicates; group inference routes to a separate sample-level design.

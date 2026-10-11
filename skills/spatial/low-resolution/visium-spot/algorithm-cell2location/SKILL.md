@@ -77,3 +77,10 @@ Preserve at least:
 - Use `cell2location-result-visualization` for substantial plotting or grouped result summaries.
 - Do not treat abundance as direct cell counts without checking the stored posterior quantity.
 - Do not reuse one project's expected cells per spot as a cross-project default.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

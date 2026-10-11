@@ -1,4 +1,4 @@
 interface:
-  display_name: "Xenium Segmentation"
-  short_description: "Load, QC, and visualize Xenium segmentation"
-  default_prompt: "Use $xenium-segmentation-new to inspect and visualize XOA 2.0+ Xenium segmentation outputs."
+  display_name: "Xenium Segmentation New"
+  short_description: "Xenium Segmentation New workflow guidance"
+  default_prompt: "Use $xenium-segmentation-new to guide this task with its input and validation contracts."

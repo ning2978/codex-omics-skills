@@ -1,0 +1,272 @@
+{
+  "algorithm-cell2location": {
+    "skills": [],
+    "resources": []
+  },
+  "algorithm-cellcharter": {
+    "skills": [],
+    "resources": []
+  },
+  "algorithm-commot": {
+    "skills": [],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "algorithm-rctd": {
+    "skills": [],
+    "resources": []
+  },
+  "algorithm-tangram": {
+    "skills": [],
+    "resources": []
+  },
+  "cell2location-result-visualization": {
+    "skills": [],
+    "resources": []
+  },
+  "codex-imc-neighborhood-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "environment-installation-policy": {
+    "skills": [],
+    "resources": []
+  },
+  "h5ad-to-r-bridge": {
+    "skills": [],
+    "resources": []
+  },
+  "omics-analysis-runtime-preflight": {
+    "skills": [],
+    "resources": []
+  },
+  "publication-grade-omics-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "render-scrna-dotplot": {
+    "skills": [],
+    "resources": [
+      "skills/_shared/dotplot"
+    ]
+  },
+  "render-xenium-dotplot": {
+    "skills": [],
+    "resources": [
+      "skills/_shared/dotplot"
+    ]
+  },
+  "sc-cell-communication": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-integration-clustering": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-marker-annotation": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-multiomics-tcr-vdj-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "sc-preprocessing-qc": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-pyscenic-regulon-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "sc-r-monocle2-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "sc-sample-level-comparison": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-subcluster-analysis": {
+    "skills": [
+      "sc-integration-clustering",
+      "sc-marker-annotation",
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "sc-velocity-paga-cellrank-analysis": {
+    "skills": [
+      "workflow-sc-analysis"
+    ],
+    "resources": []
+  },
+  "skills-taxonomy": {
+    "skills": [
+      "algorithm-cell2location",
+      "algorithm-cellcharter",
+      "algorithm-commot",
+      "algorithm-rctd",
+      "algorithm-tangram",
+      "cell2location-result-visualization",
+      "codex-imc-neighborhood-analysis",
+      "environment-installation-policy",
+      "h5ad-to-r-bridge",
+      "omics-analysis-runtime-preflight",
+      "publication-grade-omics-analysis",
+      "render-scrna-dotplot",
+      "render-xenium-dotplot",
+      "sc-cell-communication",
+      "sc-integration-clustering",
+      "sc-marker-annotation",
+      "sc-multiomics-tcr-vdj-analysis",
+      "sc-preprocessing-qc",
+      "sc-pyscenic-regulon-analysis",
+      "sc-r-monocle2-analysis",
+      "sc-sample-level-comparison",
+      "sc-subcluster-analysis",
+      "sc-velocity-paga-cellrank-analysis",
+      "spatial-null-model",
+      "squidpy-spatial-image-features",
+      "st-data-preparation",
+      "stlearn-spatial-trajectory",
+      "visium-spot-niche-annotation",
+      "visium-spot-squidpy-proximity",
+      "visiumhd-cellcharter-visualization",
+      "visiumhd-qc-analysis",
+      "visiumhd-spatial-domain-neighborhood",
+      "workflow-deconvolution-run",
+      "workflow-sc-analysis",
+      "workflow-st-analysis",
+      "xenium-rcn-anchor-nearest-cell-analysis",
+      "xenium-resegmentation",
+      "xenium-roi-dapi-overlays",
+      "xenium-roi-h5ad-qc-segmentation",
+      "xenium-scimap-neighborhood-analysis",
+      "xenium-scrna-label-transfer",
+      "xenium-segmentation-new"
+    ],
+    "resources": [
+      "skills/_shared/dotplot"
+    ]
+  },
+  "spatial-null-model": {
+    "skills": [],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "squidpy-spatial-image-features": {
+    "skills": [],
+    "resources": []
+  },
+  "st-data-preparation": {
+    "skills": [],
+    "resources": []
+  },
+  "stlearn-spatial-trajectory": {
+    "skills": [],
+    "resources": []
+  },
+  "visium-spot-niche-annotation": {
+    "skills": [
+      "sc-marker-annotation"
+    ],
+    "resources": []
+  },
+  "visium-spot-squidpy-proximity": {
+    "skills": [],
+    "resources": []
+  },
+  "visiumhd-cellcharter-visualization": {
+    "skills": [],
+    "resources": []
+  },
+  "visiumhd-qc-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "visiumhd-spatial-domain-neighborhood": {
+    "skills": [
+      "sc-marker-annotation"
+    ],
+    "resources": []
+  },
+  "workflow-deconvolution-run": {
+    "skills": [],
+    "resources": []
+  },
+  "workflow-sc-analysis": {
+    "skills": [
+      "omics-analysis-runtime-preflight",
+      "sc-integration-clustering",
+      "sc-marker-annotation",
+      "sc-preprocessing-qc",
+      "sc-sample-level-comparison"
+    ],
+    "resources": []
+  },
+  "workflow-st-analysis": {
+    "skills": [
+      "sc-marker-annotation",
+      "workflow-sc-analysis"
+    ],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "xenium-rcn-anchor-nearest-cell-analysis": {
+    "skills": [],
+    "resources": []
+  },
+  "xenium-resegmentation": {
+    "skills": [],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "xenium-roi-dapi-overlays": {
+    "skills": [],
+    "resources": []
+  },
+  "xenium-roi-h5ad-qc-segmentation": {
+    "skills": [],
+    "resources": []
+  },
+  "xenium-scimap-neighborhood-analysis": {
+    "skills": [
+      "workflow-st-analysis"
+    ],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "xenium-scrna-label-transfer": {
+    "skills": [
+      "sc-marker-annotation"
+    ],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  },
+  "xenium-segmentation-new": {
+    "skills": [
+      "workflow-st-analysis"
+    ],
+    "resources": [
+      "skills/_shared/spatial"
+    ]
+  }
+}

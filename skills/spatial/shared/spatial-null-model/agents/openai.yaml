@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spatial null models"
+  short_description: "Test fixed-anchor conditional spatial label nulls"
+  default_prompt: "Use $spatial-null-model to prepare and validate a scoped spatial analysis with explicit inputs and handoffs."

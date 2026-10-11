@@ -1,4 +1,4 @@
 interface:
-  display_name: "Single-Cell Workflow"
-  short_description: "Stage reproducible single-cell RNA-seq workflows"
-  default_prompt: "Use $workflow-sc-analysis to stage a reproducible single-cell RNA-seq workflow and its handoffs."
+  display_name: "Workflow Sc Analysis"
+  short_description: "Workflow Sc Analysis workflow guidance"
+  default_prompt: "Use $workflow-sc-analysis to guide this task with its input and validation contracts."

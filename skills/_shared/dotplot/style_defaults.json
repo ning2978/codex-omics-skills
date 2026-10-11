@@ -1,0 +1,18 @@
+{
+  "gene_font_pt": 9,
+  "group_font_pt": 11,
+  "strip_font_pt": 11,
+  "legend_font_pt": 11,
+  "title_font_pt": 14,
+  "strip_height_inches": 0.5,
+  "program_palette": [
+    "#D5E5EF",
+    "#F0DDCB",
+    "#DAE8D3",
+    "#E4DBEF",
+    "#F1D5D8",
+    "#D6E8E5",
+    "#EAE4C9",
+    "#DDE0EC"
+  ]
+}

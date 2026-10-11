@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium Native Seurat DotPlot"
+  short_description: "Render validated native Seurat Xenium DotPlots"
+  default_prompt: "Use $render-xenium-dotplot to render a validated PNG-only Xenium marker DotPlot package with native Seurat statistics and an obs_name join."

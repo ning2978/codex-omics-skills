@@ -31,3 +31,24 @@ Use this map only when an old skill name appears in a prompt, script, or documen
 - retired or historical adapters -> `~/.codex/skills-archive/`
 
 Do not create a second skill solely for a parameter preset, runtime wrapper, sensitivity branch, tissue, cohort, or one-off plot when the owning canonical skill can express it as a mode or reference.
+
+## 43-skill publication refresh
+
+The 34-skill release expands with nine canonical additions:
+
+- Single-cell: `sc-preprocessing-qc`, `sc-integration-clustering`,
+  `sc-marker-annotation`, `sc-sample-level-comparison`, `sc-cell-communication`.
+- Spatial: `spatial-null-model`, `xenium-resegmentation`.
+- Visualization: `render-scrna-dotplot`, `render-xenium-dotplot`.
+
+Existing canonical names remain stable. The two DotPlot entrypoints now resolve
+one shared engine and R renderer under `_shared/dotplot`; their CLI names remain
+unchanged. Spatial executable helpers require `_shared/spatial`. Use the installer
+to retain dependency paths. Project-specific scripts and historical cohort
+benchmarks are not distributed; keep those in the consuming project's adapter.
+
+Typed cohort predicates replace disease-code inference in the published DotPlot
+engine. Legacy prose-only scopes require an explicit configuration mapping and
+fail closed when absent. Annotation source, exact-key, priority and gate checks
+remain mandatory. Single-group explanatory text moves from the figure caption to
+result records without changing native statistics or the expression legend.

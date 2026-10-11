@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import json
+import importlib.util
 import itertools
 import re
 import sys
@@ -100,6 +102,8 @@ def discover(global_root: Path, project_root: Path | None) -> list[Skill]:
         root = global_root / category
         if root.exists():
             candidates.extend(("global", path) for path in root.rglob("SKILL.md"))
+    candidates.extend(("global", path) for path in global_root.glob("render-*/SKILL.md"))
+    candidates.extend(("global", path) for path in global_root.glob("publication-grade-omics-analysis/SKILL.md"))
     if project_root is not None and (project_root / "skills").exists():
         candidates.extend(("project", path) for path in (project_root / "skills").glob("*/SKILL.md"))
 
@@ -142,7 +146,7 @@ def audit(
             errors.append(f"{skill.path}: {exc}")
             continue
 
-        if keys != {"name", "description"}:
+        if not {"name", "description"}.issubset(keys) or keys - {"name", "description", "metadata"}:
             errors.append(
                 f"{skill.path}: frontmatter keys are {sorted(keys)}; expected name and description only"
             )
@@ -166,7 +170,11 @@ def audit(
             if ("$" + name) not in agent_text:
                 errors.append(f"{agents}: default prompt does not mention $" + name)
 
-        for reference in sorted(set(REFERENCE_RE.findall(skill.text))):
+        links = re.findall(r"\[[^\]]*\]\(([^)]+)\)", skill.text)
+        references = {link.split("#", 1)[0] for link in links
+                      if not re.match(r"^[a-z]+:", link) and not link.startswith("/")}
+        references.update(re.findall(r"`(references/[A-Za-z0-9_./-]+)`", skill.text))
+        for reference in sorted(references - {""}):
             target = skill.path.parent / reference.rstrip(".,:;)")
             if not target.exists():
                 errors.append(f"{skill.path}: missing bundled reference {reference}")
@@ -241,6 +249,71 @@ def audit(
     return errors, warnings
 
 
+def semantic_audit(skills, project_root, global_root):
+    errors, notes = [], []
+    if project_root is None:
+        return [], ['Current contract checks not run: --project-root required']
+    registry_path = project_root / 'metadata/current_annotation_registry.json'
+    module, registry = None, None
+    if not registry_path.exists():
+        notes.append('annotation_registry: NOT_APPLICABLE (ordinary project without current_annotation_registry.json)')
+    else:
+        try:
+            registry = json.loads(registry_path.read_text())
+            if not isinstance(registry.get('use_cases'), dict) or not registry['use_cases']:
+                raise ValueError('Registry requires a nonempty use_cases mapping')
+            module_path = global_root / '_shared/dotplot/annotation_contract.py'
+            spec = importlib.util.spec_from_file_location('annotation_contract_audit', module_path)
+            if spec is None or spec.loader is None:
+                raise ValueError('Cannot load annotation contract validator')
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+        except (ValueError, KeyError, OSError, ImportError, AttributeError) as exc:
+            errors.append(f'annotation_registry: {exc}')
+    for role in registry['use_cases'] if module is not None else []:
+        try:
+            track = module.resolve(project_root/'docs/CURRENT_ANNOTATIONS.md', registry_path, role)
+            for source in track.get('sources', []) + track.get('assignments', []):
+                for key in ('path', 'artifact_path'):
+                    if source.get(key) and not (project_root/source[key]).is_file():
+                        errors.append(f"{role}:{source.get('source_id', source.get('assignment_id'))}.{key}: missing {source[key]}")
+            if role == 'xenium_rcn':
+                resolution = track['assignment_resolution']
+                if resolution.get('default_assignment_id') or resolution.get('default_namespace') or resolution.get('unqualified_reference_allowed') is not False:
+                    errors.append('xenium_rcn: unqualified current default is forbidden')
+            notes.append(f'{role}: semantic comparison PASS ({track["track_id"]})')
+        except (ValueError, KeyError, OSError, TypeError, AttributeError) as exc:
+            errors.append(str(exc))
+    # Audit literal data inputs only in active instructions. Historical sections
+    # stay available for reproduction but are never asserted to be current.
+    data_re = re.compile(r'`((?:results|Xenium_CODEX_DATA_downstream)/[^`<>\n]+\.(?:h5ad|csv(?:\.gz)?|parquet|ome\.tif|json))`')
+    for skill in skills:
+        if 'Historical reproduction only; disabled' in skill.text:
+            notes.append(f'{skill.name}: historical literal-input checks NOT_APPLICABLE')
+            continue
+        sections = re.split(r'(?m)(^#{1,3} .*$)', skill.text)
+        historical = 'Historical reproduction only; disabled' in skill.text
+        for section in sections:
+            if section.startswith('#'):
+                historical = 'historical' in section.lower()
+                continue
+            if historical:
+                continue
+            for value in data_re.findall(section):
+                if value == 'results/xenium_annotation_registry/current_annotation.json' and 'frozen' in section:
+                    continue
+                if not (project_root/value).is_file():
+                    errors.append(f'{skill.path}: missing active input {value}')
+    for modality in ('scrna', 'xenium'):
+        renderer = global_root / f'render-{modality}-dotplot/scripts/render_{modality}_dotplot.py'
+        oracle = global_root / '_shared/dotplot/seurat_dotplot_renderer.R'
+        if not renderer.is_file() or not oracle.is_file():
+            errors.append(f'{modality}: missing renderer or shared R target')
+        elif oracle.resolve() != global_root/'_shared/dotplot/seurat_dotplot_renderer.R':
+            errors.append(f'{modality}: R renderer is not the shared engine')
+    return errors, notes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -273,13 +346,23 @@ def main() -> int:
     for message in warnings:
         print(f"WARN\t{message}")
 
+    semantic_errors, semantic_notes = semantic_audit(skills, args.project_root, args.global_root.expanduser())
+    for message in semantic_errors:
+        print(f"SEMANTIC_ERROR\t{message}")
+    for message in semantic_notes:
+        print(f"SEMANTIC_CHECK\t{message}")
+    print(f"STRUCTURE\t{'FAIL' if errors else 'PASS'}")
+    registry_path = args.project_root / 'metadata/current_annotation_registry.json' if args.project_root else None
+    registry_status = 'NOT_RUN' if registry_path is None else 'NOT_APPLICABLE' if not registry_path.exists() else 'FAIL' if semantic_errors else 'PASS'
+    print(f"ANNOTATION_REGISTRY\t{registry_status}")
+    print(f"SEMANTICS\t{'FAIL' if semantic_errors else ('PASS' if args.project_root else 'NOT_RUN')}")
     global_count = sum(skill.scope == "global" for skill in skills)
     project_count = sum(skill.scope == "project" for skill in skills)
     print(
         f"SUMMARY\tglobal={global_count}\tproject={project_count}"
         f"\terrors={len(errors)}\twarnings={len(warnings)}"
     )
-    return 1 if errors or (args.strict and warnings) else 0
+    return 1 if errors or semantic_errors or (args.strict and warnings) else 0
 
 
 if __name__ == "__main__":

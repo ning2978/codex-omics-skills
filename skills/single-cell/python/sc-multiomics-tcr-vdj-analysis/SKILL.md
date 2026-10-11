@@ -48,8 +48,11 @@ Normalize column names early:
 
 2. **Join to AnnData**
 
+Use capture-library + original barcode keys and a one-cell AIRR list of contigs. Never join raw contig rows to RNA obs or use naked cross-sample barcodes. The bundled `scripts/prepare_airr.py` groups via Scirpy's reader, checks keys and retains RNA cells without receptors. Audit barcode normalization before reading; do not strip suffixes silently. For custom **one-row-per-cell** metadata only:
+
 ```python
-adata.obs = adata.obs.join(vdj_metadata.set_index("barcode"), how="left")
+assert vdj_metadata.index.is_unique and adata.obs_names.is_unique
+adata.obs = adata.obs.join(vdj_metadata, how="left", validate="one_to_one")
 ```
 
 Check the fraction of cells with VDJ annotations by sample and cell type.
@@ -58,13 +61,20 @@ Check the fraction of cells with VDJ annotations by sample and cell type.
 
 ```python
 import scirpy as ir
+from prepare_airr import attach_airr, export_airr_metadata  # resolved bundled scripts path
 
-ir.pp.merge_with_ir(adata, vdj_adata)
-ir.tl.chain_qc(adata)
-ir.pp.ir_dist(adata, metric="identity", sequence="aa")
-ir.tl.define_clonotypes(adata, receptor_arms="all", dual_ir="primary_only")
-ir.tl.clonal_expansion(adata)
+mdata, overlap = attach_airr(adata, {"captureA": "captureA/filtered_contig_annotations.csv"})
+airr = mdata.mod["airr"]
+ir.pp.index_chains(airr)
+ir.tl.chain_qc(airr)
+ir.pp.ir_dist(airr, metric="identity", sequence="nt")
+ir.tl.define_clonotypes(airr, receptor_arms="all", dual_ir="primary_only",
+                       within_group="receptor_type", n_jobs=1)
+ir.tl.clonal_expansion(airr, expanded_in="sample_id")
+adata_with_ir = export_airr_metadata(mdata)
 ```
+
+This AIRR/MuData route targets Scirpy >=0.13 and is exercised with 0.22.4. Record exact Scirpy/MuData versions and run a fixture before adapting to another version. `merge_with_ir` was removed in 0.13. Nucleotide-identity clonotypes use `define_clonotypes`; amino-acid similarity uses explicit `ir_dist(sequence="aa")` and matching `define_clonotype_clusters(sequence="aa", metric=...)`. Do not compute one distance definition and unknowingly invoke another. Record productive-chain filters, multi-chain handling, organism and definition scope. Global clone IDs need not be sample-exclusive; expansion must use a declared sample denominator.
 
 4. **Diversity and overlap**
    - Report clonotype count, reads/cell count, mean frequency, CDR3 length, and convergence when available.
@@ -95,3 +105,10 @@ ir.tl.clonal_expansion(adata)
 - Do not infer antigen specificity from clonotype expansion alone.
 - Do not merge bulk and single-cell TCR frequencies without normalizing sample/library sizes.
 - CNV or ordinary Scanpy integration utilities from course notebooks are supporting context, not part of this skill unless VDJ interpretation depends on them.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

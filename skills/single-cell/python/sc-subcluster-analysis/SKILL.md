@@ -1,117 +1,60 @@
 ---
 name: sc-subcluster-analysis
-description: Use this skill when extracting a single-cell subset for reclustering and marker-driven subcluster annotation, especially for immune/myeloid/macrophage/monocyte subsets where raw counts must be preserved, HVG selection needs fallback logic, contamination must be judged from top markers, and labels should be proposed from current marker evidence rather than reused blindly. Also use it for requests involving new UMAP, re-embedding, rerun dimensionality reduction, recluster after filtering/removal/cleaning, filter then rerun, 重新降维, 重新聚类, or 新的 UMAP.
+description: Recluster scRNA/snRNA or segmented-cell subsets from retained counts, or coordinate iterative subclustering, marker review and program-supported automatic or requested manual cleanup rounds. Use for filter-and-rerun or an annotation-cleaning loop; preserve marker-only and unchanged-graph layout-only modes. Spots/bins use mixture interpretation.
 ---
 
-# Skill: sc-subcluster-analysis
+# Subclustering and reviewed cleanup
 
-## Purpose
+Read [the data contract](../../workflow/workflow-sc-analysis/references/data-contract.md), [integration/clustering](../sc-integration-clustering/SKILL.md) and [marker annotation](../sc-marker-annotation/SKILL.md) completely. This skill owns stage transitions, exact-list decision records and stopping; those leaves own numerical methods and evidence. Repository paths, cohort codes and commands belong in a project adapter.
 
-Guide focused scRNA-seq subclustering from an existing AnnData object through:
+## Select the requested mode
 
-- subset extraction
-- counts-preserving preprocessing
-- HVG fallback
-- PCA/integration/neighbors/UMAP/Leiden
-- top marker evidence
-- contamination review
-- candidate biological naming
+- **Single expression run:** extract the requested subset, preserve counts and historical labels, rebuild the representation and review all available genes. One run does not authorize iterative exclusion.
+- **Existing-cluster review / marker-only:** enter at evidence review, accurately record that clustering/UMAP were not recomputed. A plotting or marker-export request does not request new identities or deletion.
+- **Layout-only:** use the integration leaf's unchanged-cell/unchanged-graph layout function, retaining clusters and markers. Finish with its validation; do not force a cleanup round.
+- **Reviewed loop:** for a requested subclustering–annotation–cleanup loop, read [the round protocol and helper interfaces](references/review-loop.md). An explicit cleanup-loop request authorizes `cleanup_mode=auto_supported`: record the initial request, freeze exact lists/evidence/impact, then record an independent agent review with `auto-review` and apply every supported proposal. This is an automatic decision, never a fabricated user approval or simulated approval. Use `manual_per_round` when the user requests round-by-round confirmation; missing mode in older records remains manual. Single clustering, marker review and plotting do not activate deletion. Changed sources, lists or evidence invalidate decisions and require fresh review. Preserve unresolved/unselected cells, original artifacts, cumulative attrition and reasons; every removal requires a full retained-count Harmony rerun and fresh review. Stop at `no_supported_exclusions` only with no unresolved groups; otherwise retain doubts with `evidence_insufficient`; technical failure is separate.
+- **Spot/bin data:** route to mixture/anatomy interpretation through spatial workflow. A small bin is not evidence of an individually segmented cell and cannot enter this cell-exclusion loop.
 
-## Core Workflow
+## Expression run contract
 
-**Hard contract for new embeddings:** When the user asks for a new UMAP, re-embedding, rerun dimensionality reduction, reclustering after filtering/removal/cleaning, or equivalent language, recompute the analysis from the retained cells' `layers["counts"]`: HVG, PCA, Harmony or the selected batch correction, neighbors, UMAP, and Leiden. Do not satisfy these requests by plotting, copying, or relabeling global UMAP coordinates or an existing `X_umap`.
+Identify count artifact/provenance, target lineage, species/tissue, platform, unique cell/feature keys, sample/capture, genuine biological unit, condition and selected batch. Validate counts and alignment; count-like X alone is not proof of raw counts. Preserve the source H5AD and state prior gene restrictions. Missing unit metadata permits descriptive review with an explicit limitation, not invented replication.
 
-Apply the same contract to gene-expression profiles from individually
-segmented Xenium cells. They are cell-level expression observations, not
-spot-level mixtures. Clear stale `X_umap`, neighbor graphs, and the target
-cluster key before recomputing them.
+For every changed cell set or graph, start from retained `layers["counts"]`. Rebuild normalization, HVGs, PCA, mandatory Harmony, neighbors, UMAP and Leiden. Clear old `X_umap`, graphs and the target cluster key first. Old/global coordinates may appear only as explicitly requested historical projections, never the main result. Keep full available-gene counts/log expression separate from the scaled HVG work object.
 
-**Old-coordinate handling:** Keep prior/global `X_umap` only as a historical field or as a separately named projection/overlay figure when the user explicitly requests projection or overlay. It must not become the primary `X_umap`, the main UMAP output, or evidence that the cleaned subset was re-embedded.
+Use the integration leaf's matrix-aware HVG fallback, baseline/integration comparison, explicit graph/representation and resolution/seed assessment. Harmony is required for this skill’s single expression runs and every cleanup rerun; retain unintegrated PCA/graph diagnostics, but use X_harmony for the main neighbors, UMAP and Leiden. Declare batch_key per analysis (never automatically use a biological condition). Require complete nonempty values and at least two retained batches; failure stops as technical_failure with no PCA/other-method fallback. Refit Harmony after every removal. No tissue-specific marker panel, fixed cluster IDs or universal resolution. A resolution-only sweep requires unchanged cells **and** graph; RCN/CN, neighborhood NMF and CellCharter are spatial composition/niche clustering, not expression reclustering.
 
-**Resolution Strategy:** For post-filtering subset reruns or high-resolution spatial/scRNA subsets, sweep at least `1.0/1.2/1.5` and use `1.2` as the default final Leiden resolution unless the user specifies otherwise. After contamination removal, always recompute the clean UMAP/Leiden from the retained cells' counts rather than reusing the pre-removal embedding or clusters.
+Review complete available-gene markers (default t-test, unintegrated/unscaled log layer, explicit detection filter) and independent sourced positive/competing programs, including measured genes outside top20. Top20 is display only. Inspect panel availability, detection/specificity, same-cell co-detection, biological-unit recurrence and platform QC. Keep identity, subtype, state, display label and evidence grade separate; preserve candidate/review/unresolved outcomes and historical names.
 
-**Exemption boundary:** A resolution-only sweep may reuse an existing graph
-only when both the cells and graph are unchanged and the exception is recorded.
-scimap RCN/CN, target-cell NMF neighborhood states, and CellCharter niche
-clusters are not expression reclustering and do not require a new expression
-UMAP.
+## Cleanup decisions
 
-1. **Confirm input contract**
-   - Identify the source h5ad, subset key, subset labels, condition key, sample/batch key, and existing counts source.
-   - Preserve counts in `layers["counts"]`. If no counts layer exists, document that `X` is being used and whether it appears raw/count-like.
-   - Record if the input object has already been gene-subsetted; marker interpretation must state that marker ranking is limited to available genes.
+Propose one action per observed cluster: retain, supported foreign-lineage exclusion, mixed whole-cluster exclusion, or unresolved review. Never decide removal from one foreign marker, shared cytotoxicity, cycle/stress, single-sample dominance or boundary-stain segmentation alone.
 
-2. **Build the subset**
-   - Extract only the requested biological class unless the user explicitly wants boundary/contamination classes included.
-   - Add basic QC from counts: `total_counts`, `n_genes_by_counts`.
-   - Keep a full subset object separate from the HVG working copy.
+For segmented cells distinguish segmentation doublet/boundary error, broad-compartment misassignment, adjacent transcripts and genuine mixed biology. Two same-lineage foreign markers are screening evidence only. Removal requires a sourced, lineage-specific foreign program with multiple complementary markers, measured coverage and audited feature mapping; there is no universal gene-count or score cutoff. Review target programs, cell-level distributions and coordinated coexpression, biological-unit support/limitations and platform QC. Neither averages, module scores, UMAP nor seed instability alone justify deletion. Do not require every cell to express every program gene or treat panel/detection gaps as negative. Dual program positivity alone is not contamination. If genuine target subtype, biological mixed state or potential target-cell loss remains unresolved, retain as `review`. Whole-cluster removal needs supported technical mixture or an explicit outside-target-scope interpretation and quantified target-positive count/fraction and potential loss; partial-cell evidence cannot be expanded to a whole cluster. Retain or use the applicable at-most-one mixed-parent split and review a supported foreign child.
 
-3. **Recluster with fallback**
-   - Start from counts.
-   - Run `highly_variable_genes(..., flavor="seurat_v3", batch_key=batch_key)`.
-   - If it fails, try `flavor="cell_ranger"` with the batch key.
-   - If that fails, use `flavor="cell_ranger"` without batch key.
-   - Normalize, log1p, subset to HVGs, scale, PCA.
-   - Use Harmony when a suitable batch key exists; otherwise use PCA directly.
-   - Run neighbors, UMAP, and Leiden with explicit resolution and seed.
-   - For any post-filtering rerun, perform all steps in this item again from the retained cells' counts and write the recomputed embedding as the main `X_umap`.
+A supported mixed **whole-cluster** proposal can be applied automatically in an explicitly requested loop after its frozen round, namespace, cell list and target-loss assessment pass automatic review. It is a deliberate scope decision, not proof that every removed cell is foreign. Outside this explicit branch retain applicable project rules, including at most one mixed-parent subclustering and only a supported foreign child when required. No silent repeated splitting or cleaning.
 
-4. **Compute marker evidence**
-   - By default, run marker ranking on the subset-specific HVG working copy, where HVGs were recalculated from the extracted subset counts.
-   - Do not reuse global/integration HVGs for marker ranking unless the user explicitly asks for that narrower scope.
-   - Only run marker ranking on the full-gene subset object when the user explicitly requests full-gene markers; document the larger scope and runtime/memory tradeoff.
-   - Use Wilcoxon with `pts=True`.
-   - Export all markers with `gene`, `score`, `logfoldchanges`, `pvals`, `pvals_adj`, `pct_in`, and `pct_out`.
-   - Export filtered top20 per cluster using:
-     `pvals_adj < 0.05`, `pct_in > 0.3`, sorted by `logfoldchanges` descending.
-   - Add a marker-scope note to marker tables or the run summary, such as `subset_recomputed_HVG`, `full_gene_subset`, or `global_integration_HVG`.
+Freeze evidence and action lists before the automatic review or requested manual approval; present cluster, sample and cumulative attrition. Apply all automatically supported IDs, or only manually approved IDs in manual mode, into a new counts derivative. Unselected/unresolved cells remain. Any source, cluster allocation, list or evidence change invalidates the old decision. After removal, recompute and review again before evaluating convergence.
 
-5. **Name cautiously**
-   - Do not reuse old subtype names by default.
-   - Generate candidate labels from the current cluster's strongest top markers plus a biological suffix supported by marker evidence.
-   - Treat labels as candidates until reviewed. Prefer names like `GENE1_GENE2_function_like`.
-   - If markers indicate contamination, label the cluster as requiring review rather than forcing a subtype name.
+## Completion and stopping
 
-6. **Contamination review**
-   - Check filtered top markers for non-target signals such as epithelial, T/NK, B/plasma, endothelial, stromal, RBC, neutrophil, and mast/basophil markers.
-   - Export `potential_contamination_clusters.csv` with cluster, candidate label, evidence genes, and recommended action.
-   - Do not delete clusters automatically unless the user explicitly asks.
-   - When the user approves removal of contamination clusters, remove cells by the previous cluster key/value, then rerun the subclustering workflow from the remaining cells' counts.
-   - Record removed cluster values, cells before removal, excluded cell count, and cells after removal in the run summary.
-   - Record post-removal recomputation flags in the run summary: `umap_source=recomputed_clean_subset`, `recomputed_hvg=true`, `recomputed_neighbors=true`, and `recomputed_leiden=true`.
-   - If reclustering reveals a new non-target cluster, repeat removal only when it is clearly marker-supported or the user confirms it.
+For expression runs reopen and verify immutable counts/keys, full log expression, actual HVG/PCA/X_harmony with parameters and representation fingerprints, named Harmony graph, finite current 2D UMAP and clusters. Retain `uns["expression_recluster_provenance"]` with `recomputed_hvg/pca/harmony/neighbors/umap/leiden=true`, supported by count/key/graph fingerprints, stage inputs, commands, parameters and runtime; flags alone are insufficient. Run project guards where supplied.
 
-## Required Outputs
+Each loop round retains complete markers/top view, panel/co-detection/unit/QC evidence, proposed actions, exact cell manifest, automatic decision or manual approval when applicable, all-gene annotated H5AD, HVG work H5AD, keyed sidecar, PNGs/palette and a validation manifest. An existing-cluster review may retain its source artifact by immutable reference and declare missing historical stages instead of claiming recomputation. A marker-only task needs only its requested evidence outputs.
 
-- Annotated full subset h5ad with counts, UMAP, cluster key, and candidate label key.
-- HVG working-copy h5ad.
-- `all_markers` and filtered `top20` marker tables.
-- Candidate annotation/evidence table.
-- Potential contamination table.
-- Counts by candidate label, dataset/condition/sample.
-- UMAPs for cluster, candidate label, dataset, condition, sample, and marker module scores.
-- Dotplot or violin marker panels.
-- Run summary CSV documenting input, subset, genes available for markers, marker scope, HVG method, batch key, and marker filter.
-- For any new UMAP or post-filtering rerun, the run summary must include `umap_source=recomputed_clean_subset`, `recomputed_hvg=true`, `recomputed_neighbors=true`, and `recomputed_leiden=true`.
-- Also record `recomputed_pca=true` and `recomputed_umap=true`; retain all five
-  flags in machine-readable H5AD/run provenance.
-- If projection/overlay plots are requested, export them with explicit projection naming and document that they are not the main recomputed UMAP.
+The cumulative ledger covers every initial cell, historical round namespaces, excluded round/reason and final destination. Technical acceptance and scientific stopping are separate. Stop with `no_supported_exclusions` only after review finds no supported removal and no unresolved groups. Keep unresolved groups with `evidence_insufficient`; distinguish `user_stopped`, `awaiting_approval`, and `technical_failure`. Never turn a PASS or empty top20 into biological convergence. Default new labels to candidate/review; no registry promotion is implied.
 
-## Validation Checklist
+## Internal completion and user delivery
 
-- Re-open the output h5ad and confirm `X_umap`, cluster key, candidate label key, and `layers["counts"]`.
-- Confirm the HVG working copy was recalculated from the extracted subset counts and that marker ranking used the intended scope.
-- When the user requested a new UMAP or post-filtering rerun, confirm `X_umap` was recomputed from the retained subset and that the summary has `umap_source=recomputed_clean_subset`, `recomputed_hvg=true`, `recomputed_neighbors=true`, and `recomputed_leiden=true`.
-- Require a two-dimensional current `X_umap`, neighbor graph, cluster key,
-  `layers["counts"]`, and true
-  `recomputed_hvg/pca/neighbors/umap/leiden` provenance before declaring the
-  expression recluster complete.
-- Confirm every cluster has filtered top20 marker evidence or explicitly report clusters without sufficient markers.
-- Confirm contamination table exists even if empty; an empty table should still retain column headers.
-- Confirm summary documents marker gene scope and HVG fallback result.
-- If contamination was removed, confirm the summary records the excluded cluster values and cell counts.
-- Treat validation as failed if the user requested a new UMAP and the summary contains `no_umap_recomputed=true`, or if `umap_source` points to global coordinates, an existing h5ad embedding, or any reused `X_umap`.
+Read [the shared delivery contract](../../workflow/workflow-sc-analysis/references/delivery-contract.md)
+when preparing a complete expression-analysis handoff. Completion artifacts and
+validation above stay in the working directory outside `delivery/`; select final
+UMAP PNGs, marker DotPlot PNGs, per-cluster annotation review CSV and README only.
+Standalone plotting, marker export and review deliver only requested content.
+Delivery selection does not authorize new analysis or reduce evidence requirements.
 
-## Example Pattern
+## Figure presentation
 
-For a myeloid subset, extract monocyte/macrophage-like labels from a full-count object, recalculate HVGs from the subset counts, recluster with the project batch key, and generate candidate labels from subset-HVG top markers rather than reusing broad parent labels blindly.
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xenium resegmentation"
+  short_description: "Check inputs and pilot versioned resegmentation"
+  default_prompt: "Use $xenium-resegmentation to prepare and validate a scoped spatial analysis with explicit inputs and handoffs."

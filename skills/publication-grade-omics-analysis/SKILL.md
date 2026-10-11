@@ -1,6 +1,6 @@
 ---
 name: publication-grade-omics-analysis
-description: Enforce manuscript-ready, reviewer-defensible planning, execution, annotation, statistics, validation, and reporting for single-cell, spatial, bulk, and multi-omics analyses. Use for analyses intended for an SCI manuscript, publication figures or supplements, formal biological labels or claims, threshold relaxation, cluster or cell exclusion, cross-modality comparison, patient/group inference, or any request that prioritizes publication readiness and reproducibility.
+description: Apply reviewer-defensible gates to omics planning, annotation, statistics, exclusions, validation, figures, and reporting. Use for formal biological conclusions or submission/publication deliverables. Ordinary exploratory cross-modality comparisons do not trigger the full gate.
 ---
 
 # Publication-grade Omics Analysis
@@ -62,3 +62,10 @@ Produce a manuscript handoff containing:
 - a pass/fail publication-readiness checklist.
 
 Do not call the analysis publication-ready while any required gate fails.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

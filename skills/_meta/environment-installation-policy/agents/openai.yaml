@@ -1,4 +1,4 @@
 interface:
   display_name: "Environment Installation Policy"
-  short_description: "Manage conda and pip environments consistently"
-  default_prompt: "Use $environment-installation-policy to plan a reproducible conda or pip software environment."
+  short_description: "Environment Installation Policy"
+  default_prompt: "Use $environment-installation-policy to guide this task with its input and validation contracts."

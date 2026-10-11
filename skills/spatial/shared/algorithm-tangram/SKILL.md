@@ -121,3 +121,10 @@ Before reporting results:
 - Tangram projection is not direct experimental co-localization; treat it as model-based mapping.
 - Do not use Tangram as a replacement for cell2location/RCTD when the task specifically needs abundance uncertainty or robust deconvolution benchmarks.
 - Do not copy course paths or demo marker lists into production scripts.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

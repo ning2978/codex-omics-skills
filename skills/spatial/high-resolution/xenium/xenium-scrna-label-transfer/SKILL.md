@@ -1,64 +1,20 @@
 ---
 name: xenium-scrna-label-transfer
-description: Use when transferring scRNA-seq reference labels onto Xenium cells by shared genes, Harmony/scVI/KNN embeddings, or when auditing projected Xenium cell-type labels before downstream spatial neighborhood analysis.
+description: Transfer or audit scRNA reference labels on segmented Xenium cells using explicitly mapped measured genes, separate KNN votes/calibration, and measured-program review with broader or unknown conclusions.
 ---
 
-# Xenium scRNA Label Transfer
+# Xenium label transfer and audit
 
-## Purpose
+Keep predicted labels, measured-expression review and curated annotation in separate fields. Marker-only cluster review routes to `sc-marker-annotation`. Read [the joint evidence review](../../../../single-cell/python/sc-marker-annotation/references/annotation-evidence-review.md) for biological decisions and [transfer mechanics](references/transfer-contract.md) for gene mapping, votes, calibration and handoff.
 
-Use this skill when Xenium cell labels should be derived or audited against a single-cell RNA-seq reference. It is based on the course `label_transfer.py` pattern, but with project-safe contracts and validation.
+Require unique target/reference cell keys, species, explicit reference labels and evidence grade, explicit source matrices/transforms, stable gene identifiers and an audited alias table if used. Geometry is required only for spatial audit/maps. Project adapters resolve current native/reference/cross-modality roles separately; a paused role remains paused.
 
-Do not use this for marker-only Leiden review; use `xenium-annotation-review` or a project annotation skill for that.
+1. Audit gene IDs/symbols before intersection. Preserve stable IDs and full measured target counts; do not repair collisions with `var_names_make_unique`, capitalization or automatic alias collapse.
+2. Choose an integration/transfer representation appropriate to measured panel coverage. Benchmark against a simple baseline and held-out biological units. Do not use a minimum shared-gene count as a universal quality gate.
+3. Record weighted KNN predicted label, vote fraction, top-two margin, K and weighting. A vote fraction is not calibrated probability. Store calibrated confidence only with documented out-of-unit calibration and reliability/error estimates.
+4. Combine predictions with full measured canonical/competing programs, biological-unit support and segmentation QC. Conflicts remain review flags; unsupported fine labels may receive a supported broader label or `unknown`. Missing panel genes are unavailable evidence.
+5. Export keyed predictions, mapping audit, review decisions, coverage/conflict/unknown summaries and provenance. A new labeled H5AD is optional and preserves cell keys/full matrices. Curated fields are never overwritten.
 
-## Input Contract
+The optional [audit helper](scripts/audit_transfer.py) audits gene mapping and supplied KNN votes/evidence; it does not fit embeddings or validate the biological evidence supplied to it. Its thresholds must be chosen on held-out units rather than on the target's desired composition.
 
-Require:
-
-- `reference.h5ad` with raw or normalized counts and `obs[label_key]`;
-- `xenium.h5ad` with counts, `obsm["spatial"]`, and cell ids preserved;
-- shared gene symbols after harmonizing capitalization and aliases;
-- explicit output path for a labeled Xenium copy and confidence table.
-
-Recommended minimum checks:
-
-- at least several hundred shared genes, or an explicit warning if panel size is small;
-- no duplicate `var_names` after `var_names_make_unique()`;
-- reference labels have enough cells per class for KNN voting.
-
-## Workflow
-
-1. Intersect genes and keep counts/normalization choices explicit.
-2. Preprocess reference and Xenium with the same transform where possible.
-3. Integrate in a shared latent space:
-   - `X_harmony` is acceptable for a light template;
-   - use `scvi` if the project already has a stable scVI environment and model contract.
-4. Transfer labels by weighted KNN from reference cells to Xenium cells.
-5. Store:
-   - `obs[predicted_label_key]`;
-   - `obs[predicted_label_confidence]` as max class probability;
-   - optional top-2 label margin.
-6. Plot UMAP/embedding and spatial maps for transferred labels.
-
-## Guardrails
-
-- Never replace curated `obs["cell_type"]` without writing a separate key first.
-- Do not impute/enhance Xenium gene expression from scRNA neighbors unless the user explicitly asks; keep label transfer separate from expression imputation.
-- Treat rare labels cautiously; KNN voting often collapses rare cell states into abundant parents.
-- If the Xenium panel is targeted, report missing reference marker genes for labels that look unstable.
-
-## Output Contract
-
-- labeled Xenium `.h5ad` copy;
-- `label_transfer_summary.csv` with per-label counts, mean confidence, and low-confidence fraction;
-- `low_confidence_cells.csv` for cells below the chosen threshold;
-- UMAP and spatial PNGs colored by predicted label and confidence;
-- parameters JSON recording reference path, Xenium path, gene intersection count, embedding method, K, and confidence cutoff.
-
-## Validation
-
-- Row count in output equals input Xenium `n_obs`.
-- Predicted label categories are a subset of reference labels plus any explicit `unknown` bucket.
-- Confidence values are in `[0, 1]`.
-- Spatial plots show no obvious per-ROI/library artifact that dominates label assignment.
-- Downstream neighborhood skills use the predicted label key only after this audit passes.
+Before downstream use, verify unchanged cell keys, no gene-mapping conflicts, finite vote fractions/margins in [0,1], explicit calibration status, and persistence of conflicts/unknown. Spatial summaries remain exploratory where replication or independent validation is missing.

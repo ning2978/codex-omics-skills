@@ -92,3 +92,10 @@ After plotting, verify:
 ## References
 
 Read `references/visiumhd-he-coordinate-contract.md` when implementing or debugging coordinate mapping from fullres Visium HD positions to hires/lowres H&E images.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

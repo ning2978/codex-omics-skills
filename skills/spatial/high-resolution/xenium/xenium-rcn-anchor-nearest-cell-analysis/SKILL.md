@@ -1,6 +1,6 @@
 ---
 name: xenium-rcn-anchor-nearest-cell-analysis
-description: Analyze which Xenium cell phenotypes are spatially closest to a fixed anchor phenotype inside an existing RCN/CN, using same-ROI nearest-any, nearest-heterotypic, and phenotype-specific distance queries. Use for anchor-cell colocalization summaries, ROI or biological-unit recurrence checks, and auditing nearest-cell distance outputs without recomputing RCNs.
+description: Analyze which Xenium cell phenotypes are spatially closest to a fixed anchor phenotype inside an existing RCN/CN, using same-ROI nearest-any, nearest-heterotypic, and phenotype-specific distance queries. Use for requests such as “以EC为中心看最近细胞”, “which cells are nearest to endothelial anchors in a registered RCN”, RCN anchor-cell colocalization summaries, ROI/pair recurrence checks, or auditing nearest-cell distance outputs without recomputing RCNs.
 ---
 
 # Xenium RCN Anchor Nearest-Cell Analysis
@@ -14,8 +14,9 @@ spatial-distance analysis, not a new RCN run or a new cell annotation.
 Use the bundled `scripts/rcn_anchor_nearest_cells.py` for deterministic
 same-ROI queries. Read `references/contracts-and-interpretation.md` when
 designing outputs, reviewing claims, or extending the workflow to formal
-enrichment tests. Read `references/generic-anchor-nearest-example.md` for a
-portable example with generic input names and expected-count gates.
+enrichment tests. For historical reproduction, obtain the exact archived
+inputs and namespace from the project's own adapter; this package contains no
+cohort-specific benchmark or frozen assignment default.
 
 ## Resolve the registered track first
 
@@ -27,6 +28,13 @@ portable example with generic input names and expected-count gates.
 5. Do not update the registry merely because this downstream analysis passes.
 
 Stop if the human-readable guide and machine registry disagree.
+
+The all-cell center default used when constructing a new RCN does not select a
+frozen assignment for this downstream workflow. Require an exact registered
+assignment ID or fully qualified namespace; never convert an unqualified
+`RCN1..RCNn` reference into an all-cell, non-epithelial, or immune-centered
+assignment. Keep assignments from different namespaces in separately named
+fields and never map equal RCN numbers across namespaces.
 
 ## Define the question
 
@@ -72,7 +80,7 @@ python /path/to/skill/scripts/rcn_anchor_nearest_cells.py \
   --sidecar /path/to/registered_sidecar.csv.gz \
   --assignments /path/to/frozen_assignments.csv.gz \
   --spatial-h5ad /path/to/thin_spatial.h5ad \
-  --anchor-rcn RCN_A \
+  --anchor-rcn <registered-label-in-selected-namespace> \
   --anchor-phenotype Endothelial \
   --out-dir /path/to/new_result
 ```
@@ -89,13 +97,12 @@ python /path/to/skill/scripts/rcn_anchor_nearest_cells.py \
   --rcn-column rcn_aligned_80
 ```
 
-Pass optional expected counts as hard validation gates when they have been
-established independently:
+Pass optional expected counts as hard validation gates:
 
 ```bash
-  --expected-neighbor-count "${EXPECTED_NEIGHBORS}" \
-  --expected-anchor-count "${EXPECTED_ANCHORS}" \
-  --expected-phenotype-count "${EXPECTED_PHENOTYPES}"
+  --expected-neighbor-count <expected-neighbors> \
+  --expected-anchor-count <expected-anchors> \
+  --expected-phenotype-count <expected-phenotypes>
 ```
 
 ## Distance rules
@@ -164,3 +171,10 @@ Require all of the following:
 
 Run the repository reclustering guard when present, even though this workflow
 must not invoke expression or spatial reclustering.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.

@@ -121,3 +121,10 @@ Before calling a result complete:
 ## More Detail
 
 Read `references/spot-proximity-contract.md` when implementing a new script, reviewing output tables, or debugging disagreement between abundance and log2FC plots.
+
+## Figure presentation
+
+Default to PNG with no explanatory text below the figure. Put methods, provenance
+and qualifications in documentation/result records; preserve meaningful axes,
+ticks, panel labels, program strips, legends and color bars. Choose titles for
+the task and inspect exported PNGs for overlap, cropping and excessive margins.
