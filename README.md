@@ -134,4 +134,21 @@ python skills/_shared/dotplot/tests/verify_style.py --rscript /path/to/Rscript -
 但不会声称完成历史版本对照。测试输出写在发布树之外。
 
 本次发布的检查结果与未执行范围见 [VALIDATION.md](VALIDATION.md)。
-本仓库目前未指定许可证；公开可见不等同于授予特定开源许可。
+
+## 开源许可证 / License
+
+本仓库的原创代码、Skills 指令和配套文档采用 [MIT License](LICENSE)
+（SPDX 标识：`MIT`），版权声明为 `Copyright (c) 2026 ning2978`。
+除另有明确许可声明的内容外，允许任何人免费使用、复制、修改、合并、发布、
+分发、再许可和销售，包括商业用途；分发本软件的副本或实质性部分时，必须保留
+版权声明及许可声明。软件按“原样”提供，不提供任何担保。完整条款以
+根目录 [LICENSE](LICENSE) 的英文文本为准。
+
+第三方依赖、外部工具、数据集及另有声明的第三方内容仍适用各自的许可证和
+使用条款；本仓库的 MIT 许可证不替代这些授权。单独复制或分发 Skills、脚本
+或配套文档时，请一并附上本仓库的 `LICENSE` 文件。
+
+Original code, skill instructions, and accompanying documentation are licensed
+under the [MIT License](LICENSE), except where otherwise noted. Third-party
+dependencies, tools, datasets, and separately licensed materials remain subject
+to their own licenses and terms.
