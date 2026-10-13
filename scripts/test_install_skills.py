@@ -68,6 +68,12 @@ class InstallTests(unittest.TestCase):
         self.check_closure([r for r in CATALOG if r['category']=='single-cell/python'])
         self.assertTrue((self.target/'single-cell/workflow/workflow-sc-analysis/scripts/sc_contracts.py').is_file())
 
+    def test_environment_setup_closure(self):
+        self.run_install('--name', 'omics-environment-setup')
+        self.check_closure([r for r in CATALOG if r['name']=='omics-environment-setup'])
+        self.assertTrue((self.target/'single-cell/shared/h5ad-to-r-bridge/scripts/test_bridge_roundtrip.py').is_file())
+        self.assertIn('--runtime-versions', (self.target/'_shared/dotplot/tests/verify_style.py').read_text())
+
     def test_spatial_category(self):
         self.run_install('--category', 'spatial')
         self.check_closure([r for r in CATALOG if r['category'].startswith('spatial/')])

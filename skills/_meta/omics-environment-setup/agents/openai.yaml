@@ -1,0 +1,4 @@
+interface:
+  display_name: "Omics Environment Setup"
+  short_description: "Deploy and verify basic Scanpy and Seurat environments"
+  default_prompt: "Use $omics-environment-setup to inspect my platform and deploy isolated basic analysis environments."

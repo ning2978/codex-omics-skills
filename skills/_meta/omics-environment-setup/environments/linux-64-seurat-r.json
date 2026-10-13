@@ -1,0 +1,24 @@
+{
+  "platform": "linux-64",
+  "profile": "seurat-r",
+  "channels": [
+    "conda-forge",
+    "bioconda"
+  ],
+  "specs": [
+    "r-base=4.4",
+    "r-seurat=5.3.1",
+    "r-seuratobject=5.2",
+    "r-matrix",
+    "r-ggplot2",
+    "r-patchwork",
+    "r-jsonlite",
+    "r-data.table",
+    "r-readr",
+    "r-optparse",
+    "r-statmod",
+    "bioconductor-edger=4.4",
+    "r-png",
+    "r-r.utils"
+  ]
+}

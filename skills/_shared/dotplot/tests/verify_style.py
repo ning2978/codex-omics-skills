@@ -13,7 +13,7 @@ from PIL import Image
 from scipy import sparse
 import yaml
 
-p=argparse.ArgumentParser(); p.add_argument('--baseline',type=Path,help='Optional previous renderer for old/new numeric regression'); p.add_argument('--rscript',required=True); p.add_argument('--work-dir',type=Path,required=True); args=p.parse_args()
+p=argparse.ArgumentParser(); p.add_argument('--baseline',type=Path,help='Optional previous renderer for old/new numeric regression'); p.add_argument('--rscript',required=True); p.add_argument('--work-dir',type=Path,required=True); p.add_argument('--runtime-versions', action='store_true', help='Read the exact versions from the selected R interpreter for environment acceptance'); args=p.parse_args()
 root=args.work_dir; root.mkdir(parents=True,exist_ok=False)
 skills=Path(__file__).resolve().parents[3]
 counts=np.array([[5,0,2,1],[2,0,1,3],[0,8,2,1],[0,3,1,2],[3,1,0,2],[1,4,0,3]],dtype=np.int32)
@@ -25,6 +25,10 @@ track={'track_id':'synthetic_test_only','status':'current','sources':[source]}
 (root/'guide.md').write_text('<!-- scrna_top_marker_semantics_begin -->\n```json\n'+json.dumps(track)+'\n```\n<!-- scrna_top_marker_semantics_end -->')
 (root/'markers.yaml').write_text(yaml.safe_dump({'programs':[{'name':'Program','category':'identity','genes':['HLA-DRA','B','C','D']}]}))
 config={'analysis_id':'synthetic_parity','project_root':str(root),'inputs':{'counts_h5ad':'counts.h5ad','sidecar':'source.csv','marker_yaml':'markers.yaml'},'join':{**source['join'],'target_key_unique':True},'groupings':{'labels':{'field':'label','order':['one','two','three']}},'marker_selection':{},'seurat_native':{'rscript':args.rscript,'expected_r_version':'4.4.3','expected_seurat_version':'5.5.1','expected_seuratobject_version':'5.4.0'},'project':{'annotation_use_case':'scrna_top_marker','annotation_guide':'guide.md','annotation_registry':'registry.json','run_recluster_guard':False},'output':{'root':'unused','dpi':80,'width_inches':8,'height_inches':5}}
+
+if args.runtime_versions:
+    version_result = subprocess.run([args.rscript, '--vanilla', '-e', 'cat(jsonlite::toJSON(list(expected_r_version=as.character(getRversion()),expected_seurat_version=as.character(packageVersion("Seurat")),expected_seuratobject_version=as.character(packageVersion("SeuratObject"))),auto_unbox=TRUE))'], check=True, capture_output=True, text=True)
+    config['seurat_native'].update(json.loads(version_result.stdout))
 
 import copy
 

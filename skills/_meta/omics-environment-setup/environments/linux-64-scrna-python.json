@@ -1,0 +1,27 @@
+{
+  "platform": "linux-64",
+  "profile": "scrna-python",
+  "channels": [
+    "conda-forge",
+    "bioconda"
+  ],
+  "specs": [
+    "python=3.11",
+    "scanpy=1.11.5",
+    "anndata=0.12.7",
+    "harmonypy=0.0.10",
+    "python-igraph=0.11",
+    "leidenalg=0.10",
+    "umap-learn=0.5",
+    "numpy=2.3",
+    "pandas=2.3",
+    "scipy=1.16",
+    "h5py",
+    "pyyaml",
+    "pillow",
+    "pyarrow",
+    "matplotlib-base",
+    "scikit-misc",
+    "tifffile"
+  ]
+}

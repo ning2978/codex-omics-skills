@@ -52,3 +52,9 @@ engine. Legacy prose-only scopes require an explicit configuration mapping and
 fail closed when absent. Annotation source, exact-key, priority and gate checks
 remain mandatory. Single-group explanatory text moves from the figure caption to
 result records without changing native statistics or the expression legend.
+
+## 44-skill environment setup addition
+
+Added `_meta/omics-environment-setup` for isolated CPU Scanpy and Seurat setup.
+No existing skill is retired or renamed. Installation policy and runtime-preflight
+retain their separate responsibilities.

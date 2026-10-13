@@ -1,0 +1,11 @@
+{
+  "release": "26.7.2-0",
+  "linux-64": {
+    "asset": "Miniforge3-26.7.2-0-Linux-x86_64.sh",
+    "sha256": "281b0ac7d550802efc81af633225a5e6116d29ae72f3ab4eae7168c3931a4c05"
+  },
+  "osx-arm64": {
+    "asset": "Miniforge3-26.7.2-0-MacOSX-arm64.sh",
+    "sha256": "d70bfa2e97afcda96927c9b9ca0e2316cb7750e4ce651c94388267cbe9588711"
+  }
+}

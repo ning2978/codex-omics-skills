@@ -24,7 +24,8 @@ file remains authoritative for its method or platform.
 
 ## Routing Order
 
-0. For cross-modality runtime, environment, CUDA, or GPU-training readiness, pair the selected modality route with `omics-analysis-runtime-preflight`.
+0. For basic software installation or rebuilding incompatible environments, use `_meta/omics-environment-setup`; installation policy constrains tools, setup creates environments, runtime-preflight checks task readiness.
+   For cross-modality runtime, environment, CUDA, or GPU-training readiness, pair the selected modality route with `omics-analysis-runtime-preflight`.
 1. Choose modality:
    - single-cell RNA-seq -> `single-cell/`
    - spatial transcriptomics or spatial proteomics -> `spatial/`
@@ -68,6 +69,12 @@ file remains authoritative for its method or platform.
 Do not route by tissue or project name unless historical reproduction requires an archived adapter.
 
 ## Canonical Map
+
+### Environment
+
+- `_meta/environment-installation-policy`
+- `_meta/omics-environment-setup`
+- `_meta/omics-analysis-runtime-preflight`
 
 ### Single-cell
 

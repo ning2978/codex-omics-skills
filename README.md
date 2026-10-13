@@ -1,6 +1,6 @@
 # Codex Omics Skills
 
-43 个可复用 Codex skills，覆盖单细胞 RNA-seq、Visium、Visium HD、Xenium、
+44 个可复用 Codex skills，覆盖单细胞 RNA-seq、Visium、Visium HD、Xenium、
 CODEX/IMC、DotPlot，以及环境、运行时和发表级质量控制。发布副本按本地最新
 方法与证据契约更新；项目专用路径、队列示例和运行结果不随包发布。
 
@@ -11,12 +11,12 @@ shared resources, explicit evidence contracts and synthetic regression tests.
 
 | 分组 | 数量 | 内容 |
 |---|---:|---|
-| `_meta` | 3 | taxonomy、运行时预检、conda/pip 环境策略 |
+| `_meta` | 4 | taxonomy、环境部署、运行时预检、conda/pip 环境策略 |
 | `single-cell` | 12 | QC、整合聚类、marker 注释、样本比较、通信、子聚类、轨迹、regulon、VDJ、Monocle2、R 桥接、workflow |
 | `spatial` | 25 | shared、Visium spot/HD、Xenium、CODEX/IMC，含空间零模型和重分割输入审计 |
 | 发表级分析 | 1 | 证据、统计与审稿检查 |
 | DotPlot | 2 | scRNA 与 Xenium，共享 native Seurat 数值和渲染引擎 |
-| **总计** | **43** | [`catalog.json`](catalog.json) |
+| **总计** | **44** | [`catalog.json`](catalog.json) |
 
 同时包含 `_shared/dotplot`、`_shared/spatial`、各 skill 的脚本、参考文档和
 合成数据测试。不包含患者数据、项目 annotation registry、结果、日志、缓存、
@@ -55,6 +55,30 @@ python scripts/install_skills.py --force
 历史额外文件也保留；需要精确发布文件集时安装到新目录。`--dry-run` 不写入文件；
 名称或分类无匹配时返回 2。
 
+## 新手入口：先部署分析环境
+
+首次使用可让 Codex「使用 `$omics-environment-setup`，检查我的电脑并部署
+Python 单细胞和 R/Seurat 基础环境」。支持 Linux x86_64 和 Apple Silicon
+macOS；Windows 请在 WSL2 内操作。macOS 原生验收目前待运行，不能视为 PASS。
+
+```bash
+python3 skills/_meta/omics-environment-setup/scripts/setup.py plan \
+  --profile both --report-dir "$HOME/omics-reports/plan-01"
+python3 skills/_meta/omics-environment-setup/scripts/setup.py create \
+  --profile both --bootstrap --install-dir "$HOME/omics-environments" \
+  --report-dir "$HOME/omics-reports/create-01"
+```
+
+需要 Python 3.10+ 启动部署脚本；无需先安装 conda。`inspect`/`plan` 只检查并写
+报告，`create` 可引导安装固定版本 Miniforge，并从平台锁定文件创建独立环境。
+不会修改 shell 配置或升级原环境。使用报告中的准确解释器路径运行后续任务。
+详见 [部署 skill](skills/_meta/omics-environment-setup/SKILL.md) 和
+[本次验收](ENVIRONMENT_VALIDATION.md)。
+
+**环境可用不等于已有完整分析 runner。** 基础环境覆盖 Scanpy、Seurat、桥接、
+DotPlot 和 edgeR；没有新增完整 Seurat 分析 skill，也不保证全部 44 skills
+的方法运行条件。scVI、cell2location、Monocle2 等仍需对应方法环境与 runtime-preflight。
+
 ## 运行依赖与可移植性
 
 安装器只安装 skills 文件，不安装分析软件。使用实际任务已验证的 conda/pip
@@ -85,7 +109,7 @@ python -B scripts/validate_repo.py
 python -B -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
-覆盖 43 个 skill 的元数据、taxonomy、资源链接、Python 语法、确定性 catalog、
+覆盖 44 个 skill 的元数据、taxonomy、资源链接、Python 语法、确定性 catalog、
 依赖闭包、可移植性和数据/缓存排除；安装测试在临时目录验证全量、单个 DotPlot、
 分类、重复、显式覆盖和 dry-run。GitHub Actions 执行这些检查。
 

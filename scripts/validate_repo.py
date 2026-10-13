@@ -47,7 +47,7 @@ FORBIDDEN_SUFFIXES = {
     ".pid",
     ".pyc",
 }
-TEXT_SUFFIXES = {".md", ".py", ".R", ".sh", ".json", ".yaml", ".yml"}
+TEXT_SUFFIXES = {".md", ".py", ".R", ".sh", ".json", ".yaml", ".yml", ".txt"}
 
 
 def validate(repo_root: Path) -> list[str]:
@@ -193,9 +193,9 @@ def validate(repo_root: Path) -> list[str]:
             detail = (result.stdout + result.stderr).strip()
             errors.append(f"taxonomy audit failed:\n{detail}")
 
-    if len(skill_files) != 43:
-        errors.append(f"expected 43 skills, discovered {len(skill_files)}")
-    for category, expected in {"single-cell": 12, "spatial": 25, "_meta": 3}.items():
+    if len(skill_files) != 44:
+        errors.append(f"expected 44 skills, discovered {len(skill_files)}")
+    for category, expected in {"single-cell": 12, "spatial": 25, "_meta": 4}.items():
         count = len(list((repo_root / "skills" / category).rglob("SKILL.md")))
         if count != expected:
             errors.append(f"{category}: expected {expected} skills, discovered {count}")
@@ -210,7 +210,7 @@ def main() -> int:
     if errors:
         print(f"FAILED: {len(errors)} error(s)")
         return 1
-    print("OK: 43 skills passed structure, metadata, link, syntax, and safety checks")
+    print("OK: 44 skills passed structure, metadata, link, syntax, and safety checks")
     return 0
 
 

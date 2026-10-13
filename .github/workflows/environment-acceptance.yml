@@ -1,0 +1,37 @@
+name: environment-acceptance
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            machine: x86_64
+          - runner: macos-14
+            machine: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Require native architecture
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+        run: python -c 'import os, platform; assert platform.machine() == os.environ["EXPECTED_MACHINE"], platform.machine()'
+      - name: Create and verify both fresh environments
+        run: >-
+          python -B skills/_meta/omics-environment-setup/scripts/setup.py create
+          --profile both --bootstrap
+          --install-dir "$RUNNER_TEMP/omics-envs"
+          --report-dir "$RUNNER_TEMP/omics-report"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: environment-${{ matrix.runner }}
+          path: ${{ runner.temp }}/omics-report

@@ -156,7 +156,8 @@
       "xenium-roi-h5ad-qc-segmentation",
       "xenium-scimap-neighborhood-analysis",
       "xenium-scrna-label-transfer",
-      "xenium-segmentation-new"
+      "xenium-segmentation-new",
+      "omics-environment-setup"
     ],
     "resources": [
       "skills/_shared/dotplot"
@@ -268,5 +269,16 @@
     "resources": [
       "skills/_shared/spatial"
     ]
+  },
+  "omics-environment-setup": {
+    "skills": [
+      "environment-installation-policy",
+      "omics-analysis-runtime-preflight",
+      "h5ad-to-r-bridge",
+      "sc-sample-level-comparison",
+      "render-scrna-dotplot",
+      "render-xenium-dotplot"
+    ],
+    "resources": []
   }
 }

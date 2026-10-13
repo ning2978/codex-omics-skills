@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "skill_count": 43,
+  "skill_count": 44,
   "skills": [
     {
       "name": "algorithm-cell2location",
@@ -82,6 +82,21 @@
       "path": "skills/_meta/omics-analysis-runtime-preflight",
       "description": "Audit omics runtime readiness across exact Python environments, AnnData data contracts, NVIDIA/CUDA/PyTorch, and real scVI or cell2location GPU smoke tests. Use before heavy or failing single-cell and spatial runs.",
       "dependencies": [],
+      "shared_resources": []
+    },
+    {
+      "name": "omics-environment-setup",
+      "category": "_meta",
+      "path": "skills/_meta/omics-environment-setup",
+      "description": "Inspect, plan, create and verify isolated conda environments for basic Scanpy or R/Seurat analysis on Linux x86_64 and Apple Silicon macOS, including verified Miniforge bootstrap. Use for biomedical software setup or rebuilding an incompatible environment, not for running research analyses or GPU model setup.",
+      "dependencies": [
+        "environment-installation-policy",
+        "h5ad-to-r-bridge",
+        "omics-analysis-runtime-preflight",
+        "render-scrna-dotplot",
+        "render-xenium-dotplot",
+        "sc-sample-level-comparison"
+      ],
       "shared_resources": []
     },
     {
@@ -224,6 +239,7 @@
         "environment-installation-policy",
         "h5ad-to-r-bridge",
         "omics-analysis-runtime-preflight",
+        "omics-environment-setup",
         "publication-grade-omics-analysis",
         "render-scrna-dotplot",
         "render-xenium-dotplot",
